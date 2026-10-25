@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-from datetime import timedelta
+import re
+from datetime import date, datetime, timedelta
 
 from odoo import fields, models, _
 
-from odoo.addons.tarco_hris.models.tarco_common import fmt_time, markup_sections, money
+from odoo.addons.tarco_hris.models.tarco_common import (
+    _NUM_HEADERS, _header_key, fmt_time, markup_sections, money,
+)
 
 
 class TarcoHrPenaltyGenerateWizard(models.TransientModel):
@@ -157,17 +160,17 @@ class TarcoHrPeriodReportWizard(models.TransientModel):
         if self.report_type == 'attendance':
             self.action_sync_attendance()
         output = io.BytesIO()
-        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        workbook = xlsxwriter.Workbook(output, {
+            'in_memory': True,
+            'default_date_format': 'dd mmm yyyy',
+        })
+        styles = self._xlsx_styles(workbook)
         for title, headers, rows in self._report_sections():
-            sheet = workbook.add_worksheet((title or 'Report')[:31])
-            for col, header in enumerate(headers):
-                sheet.write(0, col, header)
-            for row_index, row in enumerate(rows, start=1):
-                for col, value in enumerate(row):
-                    sheet.write(row_index, col, '' if value is None else value)
+            self._xlsx_write_sheet(workbook, styles, title, headers, rows)
         workbook.close()
+        filename = 'Tarco-HRIS-%s.xlsx' % (self.get_report_title() or self.report_type)
         attachment = self.env['ir.attachment'].create({
-            'name': 'tarco-hris-%s.xlsx' % self.report_type,
+            'name': filename.replace(' ', '-'),
             'type': 'binary',
             'datas': base64.b64encode(output.getvalue()),
             'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -177,6 +180,129 @@ class TarcoHrPeriodReportWizard(models.TransientModel):
             'url': '/web/content/%s?download=true' % attachment.id,
             'target': 'self',
         }
+
+    def _xlsx_period_label(self):
+        self.ensure_one()
+        parts = [
+            _('Period: %s — %s') % (self.date_from, self.date_to),
+        ]
+        if self.department_id:
+            parts.append(_('Department: %s') % self.department_id.name)
+        if self.employee_id:
+            parts.append(_('Employee: %s') % self.employee_id.name)
+        parts.append(self.company_id.name or '')
+        return '   |   '.join(part for part in parts if part)
+
+    def _xlsx_styles(self, workbook):
+        navy = '#0F2C4C'
+        teal = '#13A89E'
+        line = '#C5CDD6'
+        base = {
+            'font_name': 'Calibri',
+            'font_size': 10,
+            'valign': 'vcenter',
+            'border': 1,
+            'border_color': line,
+        }
+        return {
+            'band': workbook.add_format({
+                'bold': True, 'font_name': 'Calibri', 'font_size': 16,
+                'font_color': '#FFFFFF', 'bg_color': navy, 'valign': 'vcenter',
+                'align': 'left',
+            }),
+            'subtitle': workbook.add_format({
+                'font_name': 'Calibri', 'font_size': 10, 'font_color': '#334155',
+                'bg_color': '#E8EEF4', 'valign': 'vcenter',
+            }),
+            'section': workbook.add_format({
+                'bold': True, 'font_name': 'Calibri', 'font_size': 12,
+                'font_color': teal, 'valign': 'vcenter',
+            }),
+            'header': workbook.add_format(dict(base, bold=True, font_color='#FFFFFF',
+                                               bg_color=navy, align='center', text_wrap=True)),
+            'text': workbook.add_format(dict(base, align='left')),
+            'text_alt': workbook.add_format(dict(base, align='left', bg_color='#F4F7FA')),
+            'num': workbook.add_format(dict(base, align='right', num_format='#,##0.00')),
+            'num_alt': workbook.add_format(dict(base, align='right', num_format='#,##0.00', bg_color='#F4F7FA')),
+            'int': workbook.add_format(dict(base, align='right', num_format='#,##0')),
+            'int_alt': workbook.add_format(dict(base, align='right', num_format='#,##0', bg_color='#F4F7FA')),
+            'date': workbook.add_format(dict(base, align='center', num_format='dd mmm yyyy')),
+            'date_alt': workbook.add_format(dict(base, align='center', num_format='dd mmm yyyy', bg_color='#F4F7FA')),
+            'total': workbook.add_format(dict(base, bold=True, bg_color='#E8EEF4')),
+            'total_num': workbook.add_format(dict(base, bold=True, align='right',
+                                                  num_format='#,##0.00', bg_color='#E8EEF4')),
+        }
+
+    def _xlsx_cell(self, value, numeric=False):
+        if value in (None, False, '', '—'):
+            return '', 'text'
+        if isinstance(value, datetime):
+            return value.date() if not getattr(value, 'hour', None) else value, 'date'
+        if isinstance(value, date):
+            return value, 'date'
+        text = str(value).strip()
+        if re.fullmatch(r'\d{4}-\d{2}-\d{2}', text):
+            try:
+                return fields.Date.from_string(text), 'date'
+            except Exception:
+                return text, 'text'
+        if numeric:
+            try:
+                number = float(text.replace(',', ''))
+                return number, 'int' if number == int(number) else 'num'
+            except (TypeError, ValueError):
+                return text, 'text'
+        return text, 'text'
+
+    def _xlsx_write_sheet(self, workbook, styles, title, headers, rows):
+        sheet = workbook.add_worksheet((title or _('Report'))[:31])
+        last = max(len(headers) - 1, 0)
+        sheet.hide_gridlines(2)
+        sheet.set_default_row(18)
+        sheet.set_row(0, 28)
+        sheet.set_row(1, 20)
+
+        def _banner(row, text, fmt):
+            if last:
+                sheet.merge_range(row, 0, row, last, text, fmt)
+            else:
+                sheet.write(row, 0, text, fmt)
+
+        _banner(0, '%s  —  %s' % (
+            self.company_id.name or _('Tarco HRIS'), self.get_report_title(),
+        ), styles['band'])
+        _banner(1, self._xlsx_period_label(), styles['subtitle'])
+        _banner(2, title or '', styles['section'])
+        sheet.set_row(3, 22)
+        numeric = [_header_key(header) in _NUM_HEADERS for header in headers]
+        for col, header in enumerate(headers):
+            sheet.write(3, col, header, styles['header'])
+        widths = [max(12, min(18, len(str(header)) + 4)) for header in headers]
+        for row_index, row in enumerate(rows):
+            excel_row = 4 + row_index
+            is_total = any(str(value).strip().lower() == 'total' for value in row if value not in (None, False))
+            alt = row_index % 2
+            for col, value in enumerate(row):
+                parsed, kind = self._xlsx_cell(value, numeric[col] if col < len(numeric) else False)
+                if is_total:
+                    fmt = styles['total_num'] if kind in ('num', 'int') else styles['total']
+                else:
+                    key = '%s_alt' % kind if alt and ('%s_alt' % kind) in styles else kind
+                    fmt = styles.get(key, styles['text_alt'] if alt else styles['text'])
+                sheet.write(excel_row, col, parsed, fmt)
+                widths[col] = max(widths[col], min(42, len(str(parsed if parsed != '' else '—')) + 3))
+        for col, width in enumerate(widths):
+            sheet.set_column(col, col, width)
+        data_end = 3 + max(len(rows), 1)
+        sheet.autofilter(3, 0, data_end, last)
+        sheet.freeze_panes(4, 0)
+        sheet.repeat_rows(0, 3)
+        sheet.set_landscape()
+        sheet.set_paper(9)
+        sheet.fit_to_pages(1, 0)
+        sheet.set_margins(0.5, 0.5, 0.6, 0.5)
+        if not rows:
+            sheet.write(4, 0, _('No records.'), styles['text'])
 
     def _employee_row_start(self, employee):
         return [
