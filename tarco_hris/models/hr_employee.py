@@ -75,6 +75,13 @@ class HrEmployee(models.Model):
     tarco_tax_rate = fields.Float(string='Tax %', groups='hr.group_hr_user')
     tarco_subject_to_insurance = fields.Boolean(string='Subject to Social Insurance', groups='hr.group_hr_user')
     tarco_insurance_rate = fields.Float(string='Social Insurance %', groups='hr.group_hr_user')
+    tarco_auto_statutory = fields.Boolean(
+        string='Adjust Taxes Automatically', tracking=True, groups='hr.group_hr_user',
+        help='Post the tax and social insurance salary adjustments automatically at the start of every month. '
+             'When unticked, an HR officer must click "Post tax and insurance" each month.')
+    tarco_statutory_month = fields.Date(
+        string='Taxes Posted For', copy=False, readonly=True, groups='hr.group_hr_user',
+        help='First day of the last month for which tax and social insurance were posted.')
 
     tarco_leave_scheme = fields.Selection(
         [('21', '21 days (6 casual + 15 annual)'), ('30', '30 days (6 casual + 24 annual)')],
@@ -429,22 +436,64 @@ class HrEmployee(models.Model):
         allocation._action_validate()
         return allocation
 
-    def action_tarco_post_statutory(self):
-        today = fields.Date.context_today(self)
-        month_start = today.replace(day=1)
-        for employee in self:
+    def _tarco_post_statutory_month(self, month_start):
+        """Post this month's tax and insurance once. Returns the employees that were posted."""
+        posted = self.browse()
+        for employee in self.sudo():
+            if employee.tarco_statutory_month and employee.tarco_statutory_month >= month_start:
+                continue
             gross = tarco_gross(employee)
+            month_label = month_start.strftime('%m/%Y')
+            created = self.env['hr.salary.attachment']
             if employee.tarco_subject_to_tax and employee.tarco_tax_rate and gross:
-                tarco_post_adjustment(
+                created |= tarco_post_adjustment(
                     self.env, employee, False, gross * employee.tarco_tax_rate / 100.0,
-                    _('Income tax %s') % employee.display_name, month_start,
+                    _('Income tax %(month)s %(employee)s', month=month_label, employee=employee.display_name),
+                    month_start,
                 )
             if employee.tarco_subject_to_insurance and employee.tarco_insurance_rate and gross:
-                tarco_post_adjustment(
+                created |= tarco_post_adjustment(
                     self.env, employee, False, gross * employee.tarco_insurance_rate / 100.0,
-                    _('Social insurance %s') % employee.display_name, month_start,
+                    _('Social insurance %(month)s %(employee)s', month=month_label, employee=employee.display_name),
+                    month_start,
                 )
-        return True
+            if created:
+                employee.tarco_statutory_month = month_start
+                posted |= employee
+        return posted
+
+    def action_tarco_post_statutory(self):
+        month_start = fields.Date.context_today(self).replace(day=1)
+        posted = self._tarco_post_statutory_month(month_start)
+        skipped = len(self) - len(posted)
+        if posted:
+            message = _('Tax and insurance posted for %(count)s employee(s) for %(month)s.',
+                        count=len(posted), month=month_start.strftime('%m/%Y'))
+            if skipped:
+                message += ' ' + _('%s skipped: already posted this month or nothing to deduct.') % skipped
+        else:
+            message = _('Nothing posted: already posted for %s, or no tax or insurance rate and salary set.') \
+                % month_start.strftime('%m/%Y')
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'success' if posted else 'warning',
+                'message': message,
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
+        }
+
+    @api.model
+    def _cron_tarco_auto_statutory(self):
+        month_start = fields.Date.context_today(self).replace(day=1)
+        employees = self.sudo().search([
+            ('tarco_auto_statutory', '=', True),
+            '|', ('tarco_subject_to_tax', '=', True), ('tarco_subject_to_insurance', '=', True),
+            '|', ('tarco_statutory_month', '=', False), ('tarco_statutory_month', '<', month_start),
+            '|', ('tarco_resignation_date', '=', False), ('tarco_resignation_date', '>=', month_start),
+        ])
+        return employees._tarco_post_statutory_month(month_start)
 
     def action_tarco_onboarding(self):
         self.ensure_one()

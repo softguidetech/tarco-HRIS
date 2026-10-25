@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.3'
+VERSION = 'Module version 19.0.1.0.5'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -77,9 +77,9 @@ CHAPTER_BLURBS = {
     2: 'One-time configuration before HR starts daily work.',
     3: 'Codes, personal data, salary, documents and onboarding in one screen.',
     4: 'Probation, renewals, alerts, resignation and rehire.',
-    5: 'Shifts, fingerprint punches, lateness and the daily attendance sheet.',
+    5: 'ZKTeco devices through BioTime, shifts, lateness and the daily attendance sheet.',
     6: 'Leave types, yearly balance, approvals, holidays and encashment.',
-    7: 'Business missions for one or many employees.',
+    7: 'Business missions for one or many employees, in any currency, with a printable mission order.',
     8: 'Overtime batches calculated from fingerprint punches.',
     9: 'Labour Law penalties, automatic lateness and absence penalties, and rewards.',
     10: 'Short advances, long-term loans and instalment schedules.',
@@ -292,11 +292,31 @@ def flow_diagram():
     return KeepTogether([Spacer(1, 4), d, Spacer(1, 8)])
 
 
+def chain_diagram(steps_labels):
+    w, h = CONTENT_W, 70
+    d = Drawing(w, h)
+    bw, bh, y = 84, 50, 10
+    gap = (w - len(steps_labels) * bw) / (len(steps_labels) - 1)
+    for i, (title, sub) in enumerate(steps_labels):
+        x = i * (bw + gap)
+        fill = TEAL if i == len(steps_labels) - 1 else NAVY
+        d.add(Rect(x, y, bw, bh, rx=6, ry=6, fillColor=fill, strokeWidth=0))
+        d.add(String(x + bw / 2, y + bh / 2 + 3, title, fontName=FSB, fontSize=8.5,
+                     fillColor=colors.white, textAnchor='middle'))
+        d.add(String(x + bw / 2, y + bh / 2 - 9, sub, fontName=F, fontSize=7.5,
+                     fillColor=colors.HexColor('#C9D6E3') if fill == NAVY else colors.white, textAnchor='middle'))
+        if i < len(steps_labels) - 1:
+            x1, x2, ym = x + bw + 3, x + bw + gap - 3, y + bh / 2
+            d.add(Line(x1, ym, x2, ym, strokeColor=TEAL, strokeWidth=1.6))
+            d.add(Polygon([x2, ym, x2 - 6, ym + 3.5, x2 - 6, ym - 3.5], fillColor=TEAL, strokeWidth=0))
+    return KeepTogether([Spacer(1, 2), d, Spacer(1, 8)])
+
+
 def cover_tiles():
     items = [
         ('Employee file', 'Codes, personal data, salary and documents.'),
         ('Contracts', '89-day probation, renewals, rehire on the same code.'),
-        ('Attendance', 'Fingerprint punches, shifts, lateness after 08:15.'),
+        ('Attendance', 'ZKTeco fingerprint via BioTime, shifts, lateness after 08:15.'),
         ('Leave', '21 or 30 day schemes, sick leave, holidays, encashment.'),
         ('Missions and overtime', 'Group missions, overtime at 1.5x and 2x.'),
         ('Penalties and rewards', 'Labour Law 1997 rules, automatic penalties.'),
@@ -513,7 +533,7 @@ def build_story():
         ['Contracts', 'All contracts, probation ending soon, renewals due soon.'],
         ['Attendance', 'Shifts and the daily attendance summary built from fingerprint punches.'],
         ['Leave', 'Leave requests, official holidays, leave encashment (sold leave).'],
-        ['Missions', 'Business missions with one or many employees.'],
+        ['Missions', 'Business missions with one or many employees, in any currency, and the mission order PDF.'],
         ['Overtime', 'Overtime batches calculated from fingerprint punches.'],
         ['Penalties and rewards', 'Penalty rules, penalties, automatic penalties from attendance, rewards.'],
         ['Advances and loans', 'Short advances, long-term loans, goods purchases and other deductions.'],
@@ -536,8 +556,9 @@ def build_story():
         'The <b>employee code</b> is the key. It is generated automatically from the year and month of joining '
         '(for example 202610001), it is shown in front of the name everywhere, it can be typed in any employee '
         'field to find the person, and it is copied to the Badge ID used by the fingerprint device.',
-        'Fingerprint punches arrive in Odoo Attendance automatically through the biometric device integration. '
-        'Tarco HRIS turns them into one <b>daily attendance</b> line per employee per day.',
+        'Fingerprint punches from the ZKTeco devices are collected by the ZKBioTime software, and Odoo fetches the '
+        'employees and their check-ins and check-outs from BioTime automatically (chapter 5.2). Tarco HRIS turns them '
+        'into one <b>daily attendance</b> line per employee per day.',
         'Approved leave, approved missions and official holidays are written onto the same daily line, so every '
         'attendance report shows them.',
         'Penalties, rewards, overtime, advances, leave deductions, leave encashment, tax and social insurance are '
@@ -564,7 +585,7 @@ def build_story():
         'Complete every employee file (next chapter), then click <b>Apply leave scheme</b> on each employee to '
         'give the year\'s leave balance.',
     ]))
-    s.append(note('Employees must have a Badge ID that matches the fingerprint device user ID. When an employee '
+    s.append(note('Employees must have a Badge ID that matches their Employee ID in BioTime. When an employee '
                   'gets a code and the Badge ID is empty, the code is copied into it for you. A Badge ID that is '
                   'already filled is never changed.'))
     s.append(PageBreak())
@@ -583,7 +604,8 @@ def build_story():
         ['Contract', 'Probation end, renewal date, contract alert, length of service, resignation date, rehire date, '
                      'shift, exempt from lateness, overtime calculation.'],
         ['Salary', 'Basic salary, cost of living allowance, transport allowance, housing allowance, other allowances, '
-                   'gross salary (calculated), subject to tax and tax %, subject to social insurance and insurance %.'],
+                   'gross salary (calculated), subject to tax and tax %, subject to social insurance and insurance %, '
+                   'adjust taxes automatically, taxes posted for.'],
         ['Leave balance', 'Annual leave scheme (21 or 30 days), casual days, annual days.'],
         ['Hiring and audit documents', 'One line per document with a file attachment.'],
     ], [3.8, 12.6]))
@@ -632,7 +654,8 @@ def build_story():
         ['Apply leave scheme', 'Creates this year\'s approved casual and annual allocations from the scheme. '
                                'It does nothing for a type that already has an allocation this year.'],
         ['Post tax and insurance', 'Creates one-time deductions for this month: gross x tax % and gross x social '
-                                   'insurance %. Click it once per payroll month.'],
+                                   'insurance %. Shown only when Adjust taxes automatically is off. Posting twice in '
+                                   'the same month is refused (see 4.4).'],
         ['Onboarding notice', 'Opens a notice to the departments that prepare for the new employee.'],
         ['Print file', 'Opens the employee file report with check boxes to choose the sections.'],
         ['Register resignation / Rehire / Renew contract', 'See chapter 4.'],
@@ -691,7 +714,25 @@ def build_story():
     ], [3.4, 5.4, 7.6]))
     s.append(section('4.4 Statutory and internal deductions'))
     s.append(p('On the HR File page tick <b>Subject to tax</b> and/or <b>Subject to social insurance</b> and enter the '
-               'percentages. Each payroll month, click <b>Post tax and insurance</b> on the employee once.'))
+               'percentages. Then choose how the monthly deduction is posted with the <b>Adjust taxes '
+               'automatically</b> flag, shown under the tax fields.'))
+    s.append(table(['Adjust taxes automatically', 'What happens each month'], [
+        ['Ticked', 'At the start of every month the daily scheduled action creates the income tax and social '
+                   'insurance salary adjustments (gross x %) for the month. They are deducted on that month\'s '
+                   'payslip. Nobody has to click anything, and the Post tax and insurance button is hidden.'],
+        ['Not ticked', 'An HR officer opens the employee and clicks <b>Post tax and insurance</b> once every payroll '
+                       'month, before running payroll.'],
+    ], [4.2, 12.2]))
+    s.append(bullets([
+        'The field <b>Taxes posted for</b> shows the last month posted. Each month is posted only once, whether by '
+        'the button or automatically, so clicking again in the same month does nothing and shows a message.',
+        'The amount uses the gross salary at the moment of posting. If the salary changes after the month is '
+        'posted, edit that month\'s adjustment in %s.' % menu('Payroll > Employees > Salary Adjustments'),
+        'Automatic posting stops for archived employees and for months after the resignation date.',
+        'The adjustments are named, for example, <b>Income tax 10/2026 [202610001] Ahmed Ali</b>.',
+    ]))
+    s.append(tip('Tick Adjust taxes automatically for all permanent staff, and leave it off only for cases HR wants to '
+                 'check by hand each month.'))
     s.append(PageBreak())
 
     # 5 Attendance
@@ -714,10 +755,56 @@ def build_story():
                'that lists the employee, a shift that matches the department or job, then a shift with no '
                'department, job or employee.'))
     s.append(tip('To exempt one person without changing the shift, tick <b>Exempt from lateness</b> on the employee.'))
-    s.append(section('5.2 Fingerprint attendance'))
-    s.append(p('Punches are downloaded from the device into Odoo Attendance by the biometric device integration, with '
-               'no manual entry. Every day Tarco HRIS summarises the last three days into %s. You can also summarise '
-               'any period with the <b>Sync fingerprint</b> button of the period report (chapter 13).'
+    s.append(section('5.2 Fingerprint devices and BioTime'))
+    s.append(p('Tarco HRIS works with <b>ZKTeco biometric devices</b> (fingerprint, face and card terminals) managed '
+               'by the <b>ZKBioTime</b> attendance software. Odoo does not talk to each terminal: it is linked to the '
+               'BioTime server, which already collects the punches from every device on site. From BioTime, Odoo '
+               'fetches all employees and all their check-in and check-out punches, with no manual entry.'))
+    s.append(chain_diagram([
+        ('ZKTeco devices', 'finger / face / card'),
+        ('ZKBioTime', 'collects all punches'),
+        ('Odoo Attendance', 'check-in / check-out'),
+        ('Daily attendance', 'Tarco HRIS summary'),
+        ('Reports and payroll', 'lateness, overtime'),
+    ]))
+    s.append(table(['Data fetched from BioTime', 'What Odoo does with it'], [
+        ['Employees', 'All BioTime employees are read with their employee ID, name and department. Each one is '
+                      'matched to the Odoo employee whose <b>Badge ID</b> equals the BioTime employee ID.'],
+        ['Check-in punches', 'Create the check-in of an attendance line in Odoo Attendance.'],
+        ['Check-out punches', 'Close the open attendance line with the check-out time.'],
+        ['Punch time', 'Converted from the BioTime server time zone to Odoo time, so lateness after 08:15 is '
+                       'measured in local time.'],
+        ['Terminal', 'The device that recorded the punch is kept for checking.'],
+    ], [4.4, 12.0]))
+    s.append(Paragraph('Matching employees', ParagraphStyle('H3', parent=BODY, fontName=FB, textColor=NAVY,
+                                                            spaceBefore=4, spaceAfter=3)))
+    s.append(bullets([
+        'Use the same number everywhere: the <b>employee code</b> in Odoo (for example 202610001), the <b>Badge ID</b> '
+        'in Odoo and the <b>Employee ID</b> in BioTime.',
+        'When an employee gets a code and the Badge ID is empty, the code is copied into the Badge ID automatically '
+        '(chapter 3.3). Enroll the employee in BioTime with the same number.',
+        'For staff already enrolled in BioTime with another number, type that number in the Badge ID so the punches '
+        'match. A filled Badge ID is never changed by Odoo.',
+    ]))
+    s.append(Paragraph('Setting up the link', ParagraphStyle('H3b', parent=BODY, fontName=FB, textColor=NAVY,
+                                                             spaceBefore=4, spaceAfter=3)))
+    s.append(steps([
+        'In BioTime, add all terminals and check that they are online and that punches appear in BioTime '
+        'transactions.',
+        'In BioTime, create a user for Odoo with permission to read employees and transactions (API access).',
+        'In the BioTime connection settings in Odoo, enter the BioTime server address and port, that user and its '
+        'password, then test the connection.',
+        'Fetch the employees once and check that every active employee is matched by Badge ID.',
+        'Leave the scheduled fetch active so new punches arrive in Odoo Attendance automatically during the day.',
+    ]))
+    s.append(note('The Odoo server must be able to reach the BioTime server on the network (same LAN or VPN), and the '
+                  'BioTime server clock and time zone must be correct. A wrong clock shifts every punch and creates '
+                  'false lateness.'))
+    s.append(section('5.3 Daily attendance'))
+    s.append(p('Every day Tarco HRIS summarises the last three days of punches into %s: one line per employee per day '
+               'with the first check-in, the last check-out, worked hours, late minutes and overtime. You can also '
+               'summarise any period with the <b>Sync fingerprint</b> button of the period report (chapter 13), for '
+               'example after BioTime was offline and the punches arrived late.'
                % menu('Attendance > Daily attendance')))
     s.append(table(['Status', 'When it is used'], [
         ['Present', 'Punched in on time and out.'],
@@ -729,7 +816,7 @@ def build_story():
         ['Rest day', 'The shift rest day, with no punch.'],
         ['Missing checkout', 'Punched in but not out. Correct the punch in Attendance and sync again.'],
     ], [3.6, 12.8]))
-    s.append(section('5.3 How the day is calculated'))
+    s.append(section('5.4 How the day is calculated'))
     s.append(bullets([
         'Leaving at or after the shift end gives the full paid day (8 hours), so 16:30 still counts as 8 hours.',
         'Overtime is the time worked after <b>Overtime starts at</b>.',
@@ -787,16 +874,49 @@ def build_story():
     s.append(chapter('7. Missions'))
     s.append(p('A mission can be requested by the department manager or by HR, at any time of day, and can include '
                'many employees without opening each employee.'))
+    s.append(section('7.1 Create and approve a mission'))
     s.append(steps([
         'Open %s and click New.' % menu('Tarco HRIS > Missions'),
         'Enter the place, purpose, start and end dates, departure time and end time (any time in 24 hours).',
-        'Enter the cost per person per day if the mission has an allowance.',
-        'Add employees on the lines by code or by name.',
+        'Choose the <b>Mission currency</b>, for example USD for a mission abroad. It defaults to the company currency.',
+        'Enter the cost per person per day, in the mission currency, if the mission has an allowance.',
+        'Add employees on the lines by code or by name. Each line shows the job and the employee\'s amount.',
         'HR clicks <b>Approve</b>. Approved missions appear in daily attendance and in every attendance report.',
         'Click <b>Done</b> when the mission is finished, or <b>Cancel</b> to drop it.',
     ]))
     s.append(p('The form calculates the number of days, the number of employees, total hours (hours per day x days x '
-               'employees) and the cost (cost per day x days x employees).'))
+               'employees) and the total cost (cost per day x days x employees).'))
+    s.append(section('7.2 Mission currency'))
+    s.append(table(['Amount', 'Currency', 'How it is calculated'], [
+        ['Cost per person per day', 'Mission currency', 'Entered by you.'],
+        ['Employee amount (on each line)', 'Mission currency', 'Cost per day x number of days.'],
+        ['Total cost', 'Mission currency', 'Cost per day x days x employees. The line total matches it.'],
+        ['Total cost in company currency', 'Company currency', 'Total cost converted at the exchange rate of the '
+                                                               'mission start date. Shown only when the currencies differ.'],
+    ], [4.6, 3.4, 8.4]))
+    s.append(bullets([
+        'The currency can be changed only while the mission is in Draft, so approved amounts stay in the approved '
+        'currency.',
+        'The Missions list shows the currency of each mission. Add the optional column <b>Total cost in company '
+        'currency</b> to see a total for all missions together.',
+        'The Missions period report (chapter 13) shows each mission in its own currency and in company currency, and '
+        'adds up the cost per place in company currency.',
+    ]))
+    s.append(note('Activate the currency and keep its exchange rates up to date in %s (or Invoicing &gt; '
+                  'Configuration &gt; Currencies). Without a rate for the mission date, the company currency amount '
+                  'equals the mission amount.' % menu('Accounting > Configuration > Currencies')))
+    s.append(section('7.3 Print the mission order'))
+    s.append(p('Click <b>Print mission order</b> at the top of the mission, or select one or more missions in the list '
+               'and choose %s. The PDF is printed on the company letterhead and contains:' % menu('Print > Mission Order')))
+    s.append(bullets([
+        'the reference, status, place, currency, dates with departure and end times, days, employees, cost per day '
+        'and total hours;',
+        'the purpose of the mission;',
+        'the employee table with code, name, department, job, days and amount, and the total in the mission currency;',
+        'the equivalent in company currency when the mission is in another currency;',
+        'signature boxes for the requester, Human Resources and the approver.',
+    ]))
+    s.append(tip('Print the mission order after approval and hand it to the employees with their allowance.'))
     s.append(PageBreak())
 
     # 8 Overtime
@@ -958,7 +1078,7 @@ def build_story():
         ['Leave', 'Annual leave', 'Annual and casual leave taken.'],
         ['Leave', 'Sick leave', 'Sick leave with start, end and days.'],
         ['Leave', 'Leave encashment cost', 'Paid cost of leave sold.'],
-        ['Missions', 'Missions', 'Missions, and hours and cost per place.'],
+        ['Missions', 'Missions', 'Missions with currency and cost, cost in company currency, and hours and cost per place.'],
         ['Overtime', 'Overtime', 'Hours at 1.5x and 2x and cost per employee.'],
         ['Discipline', 'Penalties', 'Per employee, total deducted, and repeated reasons with percentages.'],
         ['Discipline', 'Rewards', 'Name, department, amount and total.'],
@@ -998,7 +1118,8 @@ def build_story():
         ['Daily', 'HR', 'Approve leave and missions.'],
         ['Month end', 'HR', 'Generate lateness and absence penalties and confirm them.'],
         ['Month end', 'HR', 'Create and confirm the overtime batch.'],
-        ['Month end', 'HR', 'Post tax and insurance for the employees concerned.'],
+        ['Month end', 'HR', 'Post tax and insurance for employees without Adjust taxes automatically. The others '
+                            'are posted by the system at the start of the month.'],
         ['Month end', 'HR', 'Confirm rewards, advances and encashments, then run payroll.'],
         ['Month end', 'HR', 'Print the monthly reports.'],
         ['Year start', 'HR', 'Enter official holidays and apply the leave scheme to all employees.'],
@@ -1009,8 +1130,15 @@ def build_story():
     s.append(PageBreak())
     s.append(chapter('16. Troubleshooting'))
     s.append(table(['Problem', 'Solution'], [
-        ['An employee is absent although they came.', 'Check the Badge ID matches the device user ID and that the '
-                                                       'punch is in Attendance, then sync the period again.'],
+        ['An employee is absent although they came.', 'Check the punch is in BioTime transactions, the Badge ID matches '
+                                                       'the BioTime Employee ID and the punch is in Odoo Attendance, '
+                                                       'then sync the period again.'],
+        ['No new punches since this morning.', 'Check the BioTime server is running and reachable from Odoo, the '
+                                               'devices are online in BioTime, and the scheduled fetch is active.'],
+        ['Punches are a few hours early or late.', 'Correct the BioTime server clock and time zone, and the time zone '
+                                                   'of the Odoo user that runs the fetch.'],
+        ['A BioTime employee is not matched.', 'Type the BioTime Employee ID in the Badge ID of the Odoo employee, '
+                                               'then fetch again.'],
         ['Status is Missing checkout.', 'Add the check-out in Attendance and sync again.'],
         ['Overtime amount is zero.', 'Check the salary components are filled and Overtime calculation is not '
                                      '"Do not pay overtime".'],
@@ -1026,6 +1154,11 @@ def build_story():
                                'save, or use Actions &gt; Generate employee code, to get the next free code.'],
         ['Employee has no code or an old-style code.', 'Select the employees in the list and use Actions &gt; '
                                                        'Generate employee code.'],
+        ['Tax or insurance missing on the payslip.', 'Check Subject to tax / insurance, the % and the salary are set. '
+                                                     'With Adjust taxes automatically, the scheduled action posts it '
+                                                     'within a day; otherwise click Post tax and insurance.'],
+        ['Post tax and insurance does nothing.', 'The month is already posted (see Taxes posted for). Edit the '
+                                                 'existing adjustment in Payroll instead.'],
         ['Interview not in the calendar.', 'Set the interview date and time, then click Email interview time again. '
                                            'The meeting is created or updated.'],
     ], [5.6, 10.8]))

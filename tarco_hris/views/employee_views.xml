@@ -90,6 +90,8 @@
                         <field name="tarco_tax_rate" invisible="not tarco_subject_to_tax"/>
                         <field name="tarco_subject_to_insurance"/>
                         <field name="tarco_insurance_rate" invisible="not tarco_subject_to_insurance"/>
+                        <field name="tarco_auto_statutory" invisible="not tarco_subject_to_tax and not tarco_subject_to_insurance"/>
+                        <field name="tarco_statutory_month" invisible="not tarco_statutory_month"/>
                     </group>
                     <group string="Leave balance">
                         <field name="tarco_leave_scheme"/>
@@ -98,7 +100,8 @@
                     </group>
                     <div>
                         <button name="action_tarco_apply_leave_scheme" type="object" string="Apply leave scheme" class="btn-secondary"/>
-                        <button name="action_tarco_post_statutory" type="object" string="Post tax and insurance" class="btn-secondary"/>
+                        <button name="action_tarco_post_statutory" type="object" string="Post tax and insurance" class="btn-secondary"
+                                invisible="tarco_auto_statutory or (not tarco_subject_to_tax and not tarco_subject_to_insurance)"/>
                         <button name="action_tarco_onboarding" type="object" string="Onboarding notice" class="btn-secondary"/>
                         <button name="action_tarco_employee_report" type="object" string="Print file" class="btn-primary"/>
                     </div>

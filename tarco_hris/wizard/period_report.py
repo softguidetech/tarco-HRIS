@@ -375,18 +375,21 @@ class TarcoHrPeriodReportWizard(models.TransientModel):
             )
             rows.append([
                 mission.name, mission.place, str(mission.date_start), mission.number_of_days,
-                money(mission.total_hours), money(mission.cost), names,
+                money(mission.total_hours), mission.currency_id.name, money(mission.cost),
+                money(mission.cost_company_currency), names,
             ])
+        company_currency = self.company_id.currency_id.name
         by_place = {}
         for mission in missions:
             bucket = by_place.setdefault(mission.place, {'hours': 0.0, 'cost': 0.0, 'count': 0})
             bucket['hours'] += mission.total_hours
-            bucket['cost'] += mission.cost
+            bucket['cost'] += mission.cost_company_currency
             bucket['count'] += 1
         place_rows = [[place, values['count'], money(values['hours']), money(values['cost'])] for place, values in by_place.items()]
         return [
-            (_('Missions'), ['Number', 'Place', 'Date', 'Days', 'Hours', 'Cost', 'Employees'], rows),
-            (_('By place'), ['Place', 'Missions', 'Hours', 'Cost'], place_rows),
+            (_('Missions'), ['Number', 'Place', 'Date', 'Days', 'Hours', 'Currency', 'Cost',
+                             'Cost (%s)' % company_currency, 'Employees'], rows),
+            (_('By place'), ['Place', 'Missions', 'Hours', 'Cost (%s)' % company_currency], place_rows),
         ]
 
     def _section_overtime(self):

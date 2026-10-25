@@ -17,10 +17,18 @@ class TarcoHrMission(models.Model):
     number_of_days = fields.Integer(compute='_compute_number_of_days', store=True)
     hour_start = fields.Float(string='Departure time')
     hour_end = fields.Float(string='End time')
-    per_diem = fields.Monetary(string='Cost per person per day')
-    cost = fields.Monetary(compute='_compute_cost', store=True)
-    currency_id = fields.Many2one('res.currency', related='company_id.currency_id')
+    per_diem = fields.Monetary(string='Cost per person per day', tracking=True)
+    cost = fields.Monetary(compute='_compute_cost', store=True, string='Total cost')
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
+    currency_id = fields.Many2one(
+        'res.currency', string='Mission currency', required=True, tracking=True,
+        default=lambda self: self.env.company.currency_id,
+        help='Every amount of the mission (daily cost, employee amounts, total) is in this currency.')
+    company_currency_id = fields.Many2one(related='company_id.currency_id', string='Company currency')
+    cost_company_currency = fields.Monetary(
+        compute='_compute_cost_company_currency', store=True, currency_field='company_currency_id',
+        string='Total cost in company currency',
+        help='Total cost converted at the rate of the mission start date. Used to add up missions in reports.')
     line_ids = fields.One2many('tarco.hr.mission.line', 'mission_id', string='Employees')
     employee_count = fields.Integer(compute='_compute_cost', store=True)
     total_hours = fields.Float(compute='_compute_cost', store=True, string='Total hours')
@@ -49,6 +57,20 @@ class TarcoHrMission(models.Model):
                 hours += 24
             mission.total_hours = hours * (mission.number_of_days or 0) * count
             mission.cost = (mission.per_diem or 0.0) * (mission.number_of_days or 0) * count
+
+    @api.depends('cost', 'currency_id', 'company_id', 'date_start')
+    def _compute_cost_company_currency(self):
+        for mission in self:
+            company_currency = mission.company_id.currency_id
+            if not mission.currency_id or mission.currency_id == company_currency:
+                mission.cost_company_currency = mission.cost
+            else:
+                mission.cost_company_currency = mission.currency_id._convert(
+                    mission.cost, company_currency, mission.company_id,
+                    mission.date_start or fields.Date.context_today(mission))
+
+    def action_print(self):
+        return self.env.ref('tarco_hris.action_report_mission').report_action(self)
 
     @api.constrains('hour_start', 'hour_end')
     def _check_hours(self):
@@ -86,6 +108,14 @@ class TarcoHrMissionLine(models.Model):
     employee_id = fields.Many2one('hr.employee', required=True)
     employee_code = fields.Char(related='employee_id.employee_code')
     department_id = fields.Many2one(related='employee_id.department_id')
+    job_id = fields.Many2one(related='employee_id.job_id')
+    currency_id = fields.Many2one(related='mission_id.currency_id')
+    amount = fields.Monetary(compute='_compute_amount', string='Amount')
+
+    @api.depends('mission_id.per_diem', 'mission_id.number_of_days')
+    def _compute_amount(self):
+        for line in self:
+            line.amount = (line.mission_id.per_diem or 0.0) * (line.mission_id.number_of_days or 0)
 
     _mission_employee_unique = models.Constraint(
         'unique(mission_id, employee_id)',

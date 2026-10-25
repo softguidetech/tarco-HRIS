@@ -17,6 +17,104 @@
         <field name="print_report_name">'Tarco HR - %s' % (object.report_type)</field>
     </record>
 
+    <record id="action_report_mission" model="ir.actions.report">
+        <field name="name">Mission Order</field>
+        <field name="model">tarco.hr.mission</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">tarco_hris.report_mission</field>
+        <field name="report_file">tarco_hris.report_mission</field>
+        <field name="print_report_name">'Mission - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_tarco_hr_mission"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_mission_document">
+        <t t-call="web.external_layout">
+            <t t-set="cur" t-value="o.currency_id"/>
+            <div class="page">
+                <div class="d-flex justify-content-between align-items-end mb-3">
+                    <div>
+                        <h2 class="mb-0">Mission Order / أمر مأمورية</h2>
+                        <div class="text-muted">Reference <strong t-out="o.name"/></div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge text-bg-secondary fs-6" t-field="o.state"/>
+                    </div>
+                </div>
+
+                <table class="table table-sm table-bordered mb-3">
+                    <tr>
+                        <th class="w-25 table-light">Place / المكان</th><td t-out="o.place"/>
+                        <th class="w-25 table-light">Currency / العملة</th><td><t t-out="cur.name"/> (<t t-out="cur.symbol"/>)</td>
+                    </tr>
+                    <tr>
+                        <th class="table-light">From / من</th><td><span t-field="o.date_start"/> <span t-field="o.hour_start" t-options="{'widget': 'float_time'}"/></td>
+                        <th class="table-light">To / إلى</th><td><span t-field="o.date_end"/> <span t-field="o.hour_end" t-options="{'widget': 'float_time'}"/></td>
+                    </tr>
+                    <tr>
+                        <th class="table-light">Days / الأيام</th><td t-out="o.number_of_days"/>
+                        <th class="table-light">Employees / الموظفون</th><td t-out="o.employee_count"/>
+                    </tr>
+                    <tr>
+                        <th class="table-light">Cost per person per day</th>
+                        <td><span t-field="o.per_diem" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        <th class="table-light">Total hours</th><td t-out="'%.2f' % o.total_hours"/>
+                    </tr>
+                </table>
+
+                <h5>Purpose / الغرض</h5>
+                <p t-field="o.purpose" class="mb-3"/>
+
+                <h5>Employees / الموظفون</h5>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th><th>Code</th><th>Name</th><th>Department</th><th>Job</th>
+                            <th class="text-end">Days</th><th class="text-end">Amount (<t t-out="cur.name"/>)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="o.line_ids" t-as="line">
+                            <td t-out="line_index + 1"/>
+                            <td t-out="line.employee_code or ''"/>
+                            <td t-out="line.employee_id.name"/>
+                            <td t-out="line.department_id.name or ''"/>
+                            <td t-out="line.job_id.name or ''"/>
+                            <td class="text-end" t-out="o.number_of_days"/>
+                            <td class="text-end"><span t-field="line.amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="6" class="text-end">Total / الإجمالي</td>
+                            <td class="text-end"><span t-field="o.cost" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        </tr>
+                        <tr t-if="cur != o.company_currency_id" class="text-muted">
+                            <td colspan="6" class="text-end">Equivalent in <t t-out="o.company_currency_id.name"/> at the rate of <span t-field="o.date_start"/></td>
+                            <td class="text-end"><span t-field="o.cost_company_currency" t-options="{'widget': 'monetary', 'display_currency': o.company_currency_id}"/></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <table class="table table-borderless mt-5 text-center">
+                    <tr>
+                        <td class="w-33">Requested by / مقدم الطلب<br/><br/>____________________</td>
+                        <td class="w-33">Human Resources / الموارد البشرية<br/><br/>____________________</td>
+                        <td class="w-33">Approved by / الاعتماد<br/><br/>____________________</td>
+                    </tr>
+                </table>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_mission">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="tarco_hris.report_mission_document"/>
+            </t>
+        </t>
+    </template>
+
     <template id="report_employee_file">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">

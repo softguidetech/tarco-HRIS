@@ -221,5 +221,6 @@ class TarcoHrAttendanceDay(models.Model):
         today = fields.Date.context_today(self)
         self.sync_range(today - timedelta(days=2), today)
         self.env['hr.employee']._cron_tarco_contract_alerts()
+        self.env['hr.employee']._cron_tarco_auto_statutory()
         self.env['hr.salary.rule']._tarco_ensure_rules()
         self.env['tarco.hr.advance']._cron_sync_paid()
