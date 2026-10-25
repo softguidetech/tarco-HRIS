@@ -6,11 +6,39 @@
     }
 }
 
+.o_action_manager:has(> .o_action.o_tarco_dash_charts) {
+    overflow: hidden !important;
+    height: 100%;
+}
+
+.o_action_manager.o_tarco_dash_charts_manager {
+    overflow: hidden !important;
+    height: 100%;
+}
+
+.o_action_manager.o_tarco_dash_charts_manager > .o_action {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.o_action.o_tarco_dash_charts,
+.o_action.o_tarco_dash_charts_scroll {
+    display: block;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+
 .o_tarco_dash_charts {
     background: #F3F7FA;
-    min-height: 100%;
-    padding: 20px 24px 32px;
-    overflow: auto;
+    padding: 20px 24px 48px;
 
     .tdc-header {
         display: flex;

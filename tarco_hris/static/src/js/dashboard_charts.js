@@ -5,6 +5,7 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
 const COLORS = ["#13A89E", "#E8902A", "#0F2C4C", "#1A4370", "#EF4444", "#66788A", "#9FDCD5", "#8B5CF6"];
+const CHART_EVENTS = ["mousemove", "mouseout", "click", "touchstart", "touchmove"];
 
 export class TarcoDashboardCharts extends Component {
     static template = "tarco_hris.DashboardCharts";
@@ -15,6 +16,7 @@ export class TarcoDashboardCharts extends Component {
         this.action = useService("action");
         this.state = useState({ data: null, loading: true });
         this.charts = {};
+        this.rootRef = useRef("root");
         this.chartRefs = {
             statusDonut: useRef("statusDonut"),
             leaveDonut: useRef("leaveDonut"),
@@ -24,8 +26,42 @@ export class TarcoDashboardCharts extends Component {
             deptBar: useRef("deptBar"),
         };
         onWillStart(() => this.loadData());
-        onMounted(() => this.renderCharts());
-        onWillUnmount(() => this.destroyCharts());
+        onMounted(() => {
+            this._enableScroll();
+            this.renderCharts();
+        });
+        onWillUnmount(() => {
+            this.destroyCharts();
+            this._disableScroll();
+        });
+    }
+
+    _enableScroll() {
+        const root = this.rootRef.el;
+        if (!root) {
+            return;
+        }
+        root.classList.add("o_tarco_dash_charts_scroll");
+        const actionManager = root.closest(".o_action_manager");
+        if (actionManager) {
+            actionManager.classList.add("o_tarco_dash_charts_manager");
+            this._actionManagerEl = actionManager;
+        }
+    }
+
+    _disableScroll() {
+        this.rootRef.el?.classList.remove("o_tarco_dash_charts_scroll");
+        this._actionManagerEl?.classList.remove("o_tarco_dash_charts_manager");
+        this._actionManagerEl = null;
+    }
+
+    _chartOptions(extra = {}) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            events: CHART_EVENTS,
+            ...extra,
+        };
     }
 
     async loadData() {
@@ -78,7 +114,10 @@ export class TarcoDashboardCharts extends Component {
         this.charts[ref] = new Chart(ctx, {
             type: "bar",
             data: { labels: [message], datasets: [{ data: [0], backgroundColor: "#D9E2EC" }] },
-            options: { plugins: { legend: { display: false } }, scales: { y: { display: false } } },
+            options: this._chartOptions({
+                plugins: { legend: { display: false } },
+                scales: { y: { display: false } },
+            }),
         });
     }
 
@@ -112,10 +151,10 @@ export class TarcoDashboardCharts extends Component {
                 labels: series.labels,
                 datasets: [{ data: series.values, backgroundColor: COLORS, borderWidth: 0 }],
             },
-            options: {
+            options: this._chartOptions({
                 cutout: "62%",
                 plugins: { legend: { position: "bottom" } },
-            },
+            }),
         });
     }
 
@@ -138,10 +177,9 @@ export class TarcoDashboardCharts extends Component {
                     { label: "Absent", data: series.absent, backgroundColor: "#EF4444" },
                 ],
             },
-            options: {
-                responsive: true,
+            options: this._chartOptions({
                 scales: { x: { stacked: false }, y: { beginAtZero: true, ticks: { precision: 0 } } },
-            },
+            }),
         });
     }
 
@@ -167,7 +205,7 @@ export class TarcoDashboardCharts extends Component {
                     tension: 0.3,
                 }],
             },
-            options: { scales: { y: { beginAtZero: true } } },
+            options: this._chartOptions({ scales: { y: { beginAtZero: true } } }),
         });
     }
 
@@ -186,10 +224,10 @@ export class TarcoDashboardCharts extends Component {
                 labels: series.labels,
                 datasets: [{ data: series.values, backgroundColor: colors, borderRadius: 6 }],
             },
-            options: {
+            options: this._chartOptions({
                 plugins: { legend: { display: false } },
                 scales: { y: { beginAtZero: true } },
-            },
+            }),
         });
     }
 }

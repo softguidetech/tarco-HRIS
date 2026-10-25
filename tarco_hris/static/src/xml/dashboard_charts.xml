@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="tarco_hris.DashboardCharts" owl="1">
-        <div class="o_tarco_dash_charts o_action">
+        <div class="o_tarco_dash_charts o_action" t-ref="root">
             <div class="tdc-header">
                 <div>
                     <h1 class="tdc-title"><i class="fa fa-bar-chart me-2"/>HRIS Dashboard Charts</h1>
