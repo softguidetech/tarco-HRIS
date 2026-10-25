@@ -20,6 +20,16 @@ class HrLeaveType(models.Model):
 class HrLeave(models.Model):
     _inherit = 'hr.leave'
 
+    def write(self, vals):
+        if self.env.context.get('install_mode'):
+            self = self.with_context(leave_skip_state_check=True, leave_skip_date_check=True)
+        return super().write(vals)
+
+    def _check_date_state(self):
+        if self.env.context.get('install_mode') or self.env.context.get('leave_skip_state_check'):
+            return
+        return super()._check_date_state()
+
     tarco_deduction_mode = fields.Selection([
         ('balance', 'From balance / full pay'),
         ('salary', 'Deduct from salary'),

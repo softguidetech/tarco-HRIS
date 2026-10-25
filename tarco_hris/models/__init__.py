@@ -16,4 +16,5 @@ from . import hr_advance
 from . import hr_advance_line
 from . import hr_recruitment
 from . import hr_kpi
+from . import hr_dashboard
 from . import hr_demo

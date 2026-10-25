@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tarco_dashboard_form" model="ir.ui.view">
+        <field name="name">tarco.hr.dashboard.form</field>
+        <field name="model">tarco.hr.dashboard</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false" class="o_tarco_dashboard">
+                <header>
+                    <button name="action_refresh" type="object" string="Refresh" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_employees" type="object" class="oe_stat_button" icon="fa-users">
+                            <field name="employee_count" widget="statinfo" string="Employees"/>
+                        </button>
+                        <button name="action_open_probation" type="object" class="oe_stat_button" icon="fa-hourglass-half" invisible="not is_hr">
+                            <field name="probation_count" widget="statinfo" string="Probation"/>
+                        </button>
+                        <button name="action_open_renewal" type="object" class="oe_stat_button" icon="fa-refresh" invisible="not is_hr">
+                            <field name="renewal_count" widget="statinfo" string="Renewals"/>
+                        </button>
+                        <button name="action_open_late" type="object" class="oe_stat_button" icon="fa-clock-o">
+                            <field name="late_count" widget="statinfo" string="Late"/>
+                        </button>
+                        <button name="action_open_absent" type="object" class="oe_stat_button" icon="fa-user-times">
+                            <field name="absent_count" widget="statinfo" string="Absent"/>
+                        </button>
+                        <button name="action_open_leave" type="object" class="oe_stat_button" icon="fa-plane">
+                            <field name="leave_pending_count" widget="statinfo" string="Leave to approve"/>
+                        </button>
+                        <button name="action_open_missions" type="object" class="oe_stat_button" icon="fa-briefcase">
+                            <field name="mission_open_count" widget="statinfo" string="Open missions"/>
+                        </button>
+                        <button name="action_open_overtime" type="object" class="oe_stat_button" icon="fa-plus-circle">
+                            <field name="overtime_hours" widget="statinfo" string="OT hours"/>
+                        </button>
+                        <button name="action_open_penalties" type="object" class="oe_stat_button" icon="fa-gavel">
+                            <field name="penalty_draft_count" widget="statinfo" string="Draft penalties"/>
+                        </button>
+                        <button name="action_open_rewards" type="object" class="oe_stat_button" icon="fa-gift">
+                            <field name="reward_count" widget="statinfo" string="Rewards"/>
+                        </button>
+                        <button name="action_open_advances" type="object" class="oe_stat_button" icon="fa-money">
+                            <field name="advance_running_count" widget="statinfo" string="Running loans"/>
+                        </button>
+                        <button name="action_open_encashment" type="object" class="oe_stat_button" icon="fa-calendar">
+                            <field name="encashment_count" widget="statinfo" string="Encashment"/>
+                        </button>
+                        <button name="action_open_kpi" type="object" class="oe_stat_button" icon="fa-line-chart">
+                            <field name="kpi_count" widget="statinfo" string="KPI reviews"/>
+                        </button>
+                        <button name="action_open_applicants" type="object" class="oe_stat_button" icon="fa-id-card" invisible="not is_hr">
+                            <field name="applicant_count" widget="statinfo" string="Applicants"/>
+                        </button>
+                        <button name="action_open_holidays" type="object" class="oe_stat_button" icon="fa-flag" invisible="not is_hr">
+                            <field name="holiday_draft_count" widget="statinfo" string="Holidays to publish"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <field name="is_hr" invisible="1"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <div class="alert alert-info mb-3" role="alert">
+                        <field name="scope_label" nolabel="1"/>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="is_hr or employee_id">
+                        This user has no employee record. Ask HR to link the user on the employee form.
+                    </div>
+                    <group>
+                        <group string="This month">
+                            <field name="month_label"/>
+                            <field name="leave_month_days"/>
+                            <field name="overtime_hours"/>
+                            <field name="overtime_amount"/>
+                            <field name="penalty_month_count"/>
+                            <field name="penalty_amount"/>
+                            <field name="reward_amount"/>
+                            <field name="encashment_amount"/>
+                        </group>
+                        <group string="Balances">
+                            <field name="advance_balance"/>
+                            <field name="penalty_draft_count"/>
+                            <field name="mission_open_count"/>
+                            <field name="leave_pending_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Attendance" name="attendance">
+                            <field name="late_day_ids" nolabel="1" readonly="1">
+                                <list create="false" delete="false">
+                                    <field name="work_date"/>
+                                    <field name="employee_id" optional="show"/>
+                                    <field name="status"/>
+                                    <field name="check_in"/>
+                                    <field name="check_out"/>
+                                    <field name="late_minutes"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Leave" name="leave">
+                            <field name="leave_ids" nolabel="1" readonly="1">
+                                <list create="false" delete="false">
+                                    <field name="employee_id" optional="show"/>
+                                    <field name="holiday_status_id"/>
+                                    <field name="request_date_from"/>
+                                    <field name="request_date_to"/>
+                                    <field name="number_of_days"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Missions" name="missions">
+                            <field name="mission_ids" nolabel="1" readonly="1">
+                                <list create="false" delete="false">
+                                    <field name="name"/>
+                                    <field name="place"/>
+                                    <field name="date_start"/>
+                                    <field name="date_end"/>
+                                    <field name="employee_count"/>
+                                    <field name="cost"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Penalties" name="penalties">
+                            <field name="penalty_ids" nolabel="1" readonly="1">
+                                <list create="false" delete="false">
+                                    <field name="name"/>
+                                    <field name="penalty_date"/>
+                                    <field name="rule_id"/>
+                                    <field name="reason"/>
+                                    <field name="total_amount"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Rewards" name="rewards">
+                            <field name="reward_ids" nolabel="1" readonly="1">
+                                <list create="false" delete="false">
+                                    <field name="name"/>
+                                    <field name="employee_id" optional="show"/>
+                                    <field name="reason"/>
+                                    <field name="amount"/>
+                                    <field name="reward_date"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Advances" name="advances">
+                            <field name="advance_ids" nolabel="1" readonly="1">
+                                <list create="false" delete="false">
+                                    <field name="name"/>
+                                    <field name="employee_id" optional="show"/>
+                                    <field name="advance_type"/>
+                                    <field name="amount"/>
+                                    <field name="remaining_amount"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="KPIs" name="kpis">
+                            <field name="kpi_ids" nolabel="1" readonly="1">
+                                <list create="false" delete="false">
+                                    <field name="employee_id" optional="show"/>
+                                    <field name="date_from"/>
+                                    <field name="date_to"/>
+                                    <field name="score"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tarco_dashboard" model="ir.actions.server">
+        <field name="name">HRIS Dashboard</field>
+        <field name="model_id" ref="model_tarco_hr_dashboard"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open()</field>
+    </record>
+</odoo>

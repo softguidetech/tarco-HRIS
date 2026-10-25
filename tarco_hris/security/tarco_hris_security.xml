@@ -36,4 +36,113 @@
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
         <field name="domain_force">['|', '|', ('reviewer_user_id', '=', user.id), ('employee_id.user_id', '=', user.id), ('employee_id.parent_id.user_id', '=', user.id)]</field>
     </record>
+
+    <record id="tarco_attendance_day_hr_rule" model="ir.rule">
+        <field name="name">Tarco attendance day HR</field>
+        <field name="model_id" ref="model_tarco_hr_attendance_day"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_attendance_day_user_rule" model="ir.rule">
+        <field name="name">Tarco attendance day own</field>
+        <field name="model_id" ref="model_tarco_hr_attendance_day"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_overtime_hr_rule" model="ir.rule">
+        <field name="name">Tarco overtime HR</field>
+        <field name="model_id" ref="model_tarco_hr_overtime"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_overtime_user_rule" model="ir.rule">
+        <field name="name">Tarco overtime own</field>
+        <field name="model_id" ref="model_tarco_hr_overtime"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('line_ids.employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_overtime_line_hr_rule" model="ir.rule">
+        <field name="name">Tarco overtime line HR</field>
+        <field name="model_id" ref="model_tarco_hr_overtime_line"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_overtime_line_user_rule" model="ir.rule">
+        <field name="name">Tarco overtime line own</field>
+        <field name="model_id" ref="model_tarco_hr_overtime_line"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_penalty_hr_rule" model="ir.rule">
+        <field name="name">Tarco penalty HR</field>
+        <field name="model_id" ref="model_tarco_hr_penalty"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_penalty_user_rule" model="ir.rule">
+        <field name="name">Tarco penalty own</field>
+        <field name="model_id" ref="model_tarco_hr_penalty"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('line_ids.employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_penalty_line_hr_rule" model="ir.rule">
+        <field name="name">Tarco penalty line HR</field>
+        <field name="model_id" ref="model_tarco_hr_penalty_line"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_penalty_line_user_rule" model="ir.rule">
+        <field name="name">Tarco penalty line own</field>
+        <field name="model_id" ref="model_tarco_hr_penalty_line"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_reward_hr_rule" model="ir.rule">
+        <field name="name">Tarco reward HR</field>
+        <field name="model_id" ref="model_tarco_hr_reward"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_reward_user_rule" model="ir.rule">
+        <field name="name">Tarco reward own</field>
+        <field name="model_id" ref="model_tarco_hr_reward"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_advance_hr_rule" model="ir.rule">
+        <field name="name">Tarco advance HR</field>
+        <field name="model_id" ref="model_tarco_hr_advance"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_advance_user_rule" model="ir.rule">
+        <field name="name">Tarco advance own</field>
+        <field name="model_id" ref="model_tarco_hr_advance"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_advance_line_hr_rule" model="ir.rule">
+        <field name="name">Tarco advance line HR</field>
+        <field name="model_id" ref="model_tarco_hr_advance_line"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_advance_line_user_rule" model="ir.rule">
+        <field name="name">Tarco advance line own</field>
+        <field name="model_id" ref="model_tarco_hr_advance_line"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_encashment_hr_rule" model="ir.rule">
+        <field name="name">Tarco encashment HR</field>
+        <field name="model_id" ref="model_tarco_hr_leave_encashment"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_encashment_user_rule" model="ir.rule">
+        <field name="name">Tarco encashment own</field>
+        <field name="model_id" ref="model_tarco_hr_leave_encashment"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
 </odoo>

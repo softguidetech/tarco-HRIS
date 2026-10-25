@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_tarco_hris_root" name="Tarco HRIS" parent="hr.menu_hr_root" sequence="5" groups="hr.group_hr_user"/>
+    <menuitem id="menu_tarco_hris_root" name="Tarco HRIS" parent="hr.menu_hr_root" sequence="5" groups="base.group_user"/>
+    <menuitem id="menu_tarco_dashboard" name="Dashboard" parent="menu_tarco_hris_root" action="action_tarco_dashboard" sequence="1" groups="base.group_user"/>
 
-    <menuitem id="menu_tarco_employees" name="Employee file" parent="menu_tarco_hris_root" sequence="10"/>
+    <menuitem id="menu_tarco_employees" name="Employee file" parent="menu_tarco_hris_root" sequence="10" groups="hr.group_hr_user"/>
     <record id="action_tarco_employees" model="ir.actions.act_window">
         <field name="name">Employees</field>
         <field name="res_model">hr.employee</field>
@@ -16,7 +17,7 @@
     </record>
     <menuitem id="menu_tarco_onboarding" name="Onboarding notices" parent="menu_tarco_employees" action="action_tarco_onboarding" sequence="20"/>
 
-    <menuitem id="menu_tarco_contracts" name="Contracts" parent="menu_tarco_hris_root" sequence="20"/>
+    <menuitem id="menu_tarco_contracts" name="Contracts" parent="menu_tarco_hris_root" sequence="20" groups="hr.group_hr_user"/>
     <record id="action_tarco_contracts" model="ir.actions.act_window">
         <field name="name">Employment contracts</field>
         <field name="res_model">hr.employee</field>
@@ -46,7 +47,7 @@
     </record>
     <menuitem id="menu_tarco_renewal" name="Renewals due" parent="menu_tarco_contracts" action="action_tarco_renewal" sequence="30"/>
 
-    <menuitem id="menu_tarco_attendance" name="Attendance" parent="menu_tarco_hris_root" sequence="30"/>
+    <menuitem id="menu_tarco_attendance" name="Attendance" parent="menu_tarco_hris_root" sequence="30" groups="hr.group_hr_user"/>
     <record id="action_tarco_shifts" model="ir.actions.act_window">
         <field name="name">Shifts</field>
         <field name="res_model">tarco.hr.shift</field>
@@ -60,7 +61,7 @@
     </record>
     <menuitem id="menu_tarco_attendance_days" name="Daily attendance" parent="menu_tarco_attendance" action="action_tarco_attendance_days" sequence="20"/>
 
-    <menuitem id="menu_tarco_leave" name="Leave" parent="menu_tarco_hris_root" sequence="40"/>
+    <menuitem id="menu_tarco_leave" name="Leave" parent="menu_tarco_hris_root" sequence="40" groups="hr.group_hr_user"/>
     <record id="action_tarco_leave" model="ir.actions.act_window">
         <field name="name">Leave requests</field>
         <field name="res_model">hr.leave</field>
@@ -92,9 +93,9 @@
         <field name="res_model">tarco.hr.overtime</field>
         <field name="view_mode">list,form</field>
     </record>
-    <menuitem id="menu_tarco_overtime" name="Overtime" parent="menu_tarco_hris_root" action="action_tarco_overtime" sequence="60"/>
+    <menuitem id="menu_tarco_overtime" name="Overtime" parent="menu_tarco_hris_root" action="action_tarco_overtime" sequence="60" groups="hr.group_hr_user"/>
 
-    <menuitem id="menu_tarco_discipline" name="Penalties and rewards" parent="menu_tarco_hris_root" sequence="70"/>
+    <menuitem id="menu_tarco_discipline" name="Penalties and rewards" parent="menu_tarco_hris_root" sequence="70" groups="hr.group_hr_user"/>
     <record id="action_tarco_penalty_rules" model="ir.actions.act_window">
         <field name="name">Penalty rules</field>
         <field name="res_model">tarco.hr.penalty.rule</field>
@@ -126,9 +127,9 @@
         <field name="res_model">tarco.hr.advance</field>
         <field name="view_mode">list,form</field>
     </record>
-    <menuitem id="menu_tarco_advances" name="Advances and loans" parent="menu_tarco_hris_root" action="action_tarco_advances" sequence="80"/>
+    <menuitem id="menu_tarco_advances" name="Advances and loans" parent="menu_tarco_hris_root" action="action_tarco_advances" sequence="80" groups="hr.group_hr_user"/>
 
-    <menuitem id="menu_tarco_recruitment" name="Recruitment" parent="menu_tarco_hris_root" sequence="90"/>
+    <menuitem id="menu_tarco_recruitment" name="Recruitment" parent="menu_tarco_hris_root" sequence="90" groups="hr.group_hr_user"/>
     <menuitem id="menu_tarco_jobs" name="Job positions" parent="menu_tarco_recruitment" action="hr_recruitment.action_hr_job" sequence="10"/>
     <record id="action_tarco_applicants" model="ir.actions.act_window">
         <field name="name">Applicants</field>
@@ -152,7 +153,7 @@
     </record>
     <menuitem id="menu_tarco_kpi_reviews" name="Reviews" parent="menu_tarco_kpi" action="action_tarco_kpi_reviews" sequence="20" groups="base.group_user"/>
 
-    <menuitem id="menu_tarco_reports" name="Reports" parent="menu_tarco_hris_root" sequence="110"/>
+    <menuitem id="menu_tarco_reports" name="Reports" parent="menu_tarco_hris_root" sequence="110" groups="hr.group_hr_user"/>
     <record id="action_tarco_period_report" model="ir.actions.act_window">
         <field name="name">HR reports</field>
         <field name="res_model">tarco.hr.period.report.wizard</field>
@@ -176,7 +177,7 @@
     </record>
     <menuitem id="menu_tarco_ensure_rules" name="Create payroll rules" parent="menu_tarco_reports" action="action_tarco_ensure_rules" sequence="90" groups="hr.group_hr_manager"/>
 
-    <menuitem id="menu_tarco_configuration" name="Configuration" parent="menu_tarco_hris_root" sequence="200"/>
+    <menuitem id="menu_tarco_configuration" name="Configuration" parent="menu_tarco_hris_root" sequence="200" groups="hr.group_hr_user"/>
     <record id="action_tarco_demo" model="ir.actions.act_window">
         <field name="name">Demo data</field>
         <field name="res_model">tarco.hr.demo.wizard</field>

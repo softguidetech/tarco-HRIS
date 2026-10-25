@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.12'
+VERSION = 'Module version 19.0.1.0.16'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -73,10 +73,10 @@ TILE_TITLE = ParagraphStyle('TileTitle', fontName=FSB, fontSize=10, leading=13, 
 TILE_TEXT = ParagraphStyle('TileText', fontName=F, fontSize=8.5, leading=11.5, textColor=MUTED)
 
 CHAPTER_BLURBS = {
-    1: 'What the module does, where to find it and who can use it.',
+    1: 'What the module does, the HRIS dashboard, where to find it and who can use it.',
     2: 'One-time configuration before HR starts daily work.',
     3: 'Codes, personal data, salary, documents and onboarding in one screen.',
-    4: 'Probation, renewals, alerts, resignation and rehire.',
+    4: 'Probation and renewals from the Payroll dates, alerts, resignation and rehire.',
     5: 'ZKTeco devices through BioTime, shifts, lateness and the daily attendance sheet.',
     6: 'Leave types, yearly balance, approvals, holidays and encashment.',
     7: 'Business missions for one or many employees, in any currency, with a printable mission order.',
@@ -322,7 +322,7 @@ def cover_tiles():
         ('Penalties and rewards', 'Generate from attendance, checkable reasons, bulk confirm.'),
         ('Advances and loans', 'Instalments capped at the gross salary.'),
         ('Recruitment', 'Headcount, apply link, ranked candidates.'),
-        ('KPIs and reports', '20 reports in PDF and Excel.'),
+        ('Dashboard and reports', 'Company or own records, plus 20 PDF and Excel reports.'),
     ]
     tile_w = (CONTENT_W - 2 * 0.3 * cm) / 3
     cells = []
@@ -529,8 +529,9 @@ def build_story():
     s.append(p('Open the %s application and choose the %s menu. Every screen in this guide lives under that menu.'
                % (menu('Employees'), menu('Tarco HRIS'))))
     s.append(table(['Menu', 'What it contains'], [
+        ['Dashboard', 'One screen of HRIS figures. HR sees the company. An employee sees only their own records.'],
         ['Employee file', 'Employees with the HR File page, and onboarding notices.'],
-        ['Contracts', 'All contracts, probation ending soon, renewals due soon.'],
+        ['Contracts', 'All contracts; probation ending and renewals due use the Payroll trial end and contract end dates.'],
         ['Attendance', 'Shifts and the daily attendance summary built from fingerprint punches.'],
         ['Leave', 'Leave requests, official holidays, leave encashment (sold leave).'],
         ['Missions', 'Business missions with one or many employees, in any currency, and the mission order PDF.'],
@@ -548,7 +549,8 @@ def build_story():
         ['HR Administrator (Employees: Administrator)', 'Everything an officer can do, plus the payroll rule setup action.'],
         ['Department manager', 'Can request missions for their team, approve leave as the employee approver, '
                                'and fill KPI reviews for their direct reports.'],
-        ['Employee', 'Sees missions and KPI reviews that concern them. Requests leave through Time Off.'],
+        ['Employee', 'Opens the HRIS dashboard for their own attendance, leave, missions, overtime, '
+                     'penalties, rewards, advances, encashment and KPI reviews. Requests leave through Time Off.'],
     ], [5.4, 11.0]))
     s.append(tip('Access is given in %s. Open the user and set the Employees role.' % menu('Settings > Users & Companies > Users')))
     s.append(section('1.3 How the pieces connect'))
@@ -565,6 +567,21 @@ def build_story():
         'Penalties, rewards, overtime, advances, leave deductions, leave encashment, tax and social insurance are '
         'posted as <b>salary adjustments</b> and appear on the next payslip automatically.',
     ]))
+    s.append(section('1.4 The HRIS dashboard'))
+    s.append(p('Open %s. The first screen is the dashboard. It is the same design for everyone; the numbers change '
+               'with the user\'s role. Click <b>Refresh</b> after you post or confirm records.'
+               % menu('Employees > Tarco HRIS > Dashboard')))
+    s.append(table(['Who opens it', 'What they see'], [
+        ['HR Officer or HR Administrator', 'Company overview: every employee, probation ending, contract renewals, '
+                                           'applicants, unpublished holidays, and this month\'s attendance, leave, '
+                                           'missions, overtime, penalties, rewards, advances, encashment and KPIs.'],
+        ['Employee (no HR role)', 'My records only. Tiles and lists are limited to the employee linked to that user. '
+                                  'Other people\'s files never appear. If the user has no employee, the dashboard says so.'],
+    ], [5.4, 11.0]))
+    s.append(p('Each tile opens the matching list, already filtered. The pages under the tiles show the latest late '
+               'or absent days, leave, missions, penalties, rewards, advances and KPI reviews.'))
+    s.append(tip('An employee must be linked on the user form (%s). The dashboard uses that link to hide other records.'
+                 % menu('Settings > Users & Companies > Users')))
     s.append(PageBreak())
 
     # 2 Getting started
@@ -612,12 +629,15 @@ def build_story():
                      'master, doctorate), field of study, school, years of experience.'],
         ['Contact and address', 'Private phone, work mobile, emergency phone, private email, work email, and the '
                                 'address as state, city, district and block.'],
-        ['Contract', 'Probation end, renewal date, contract alert, length of service, resignation date, rehire date, '
-                     'shift, exempt from lateness, overtime calculation.'],
+        ['Contract', 'Probation end, Payroll probation end, contract end (Payroll), annual renewal date, contract '
+                     'alert, length of service, resignation date, rehire date, shift, exempt from lateness, overtime '
+                     'calculation.'],
         ['Salary', 'Basic salary, cost of living allowance, transport allowance, housing allowance, other allowances, '
                    'gross salary (calculated), subject to tax and tax %, subject to social insurance and insurance %, '
                    'adjust taxes automatically, taxes posted for.'],
         ['Leave balance', 'Annual leave scheme (21 or 30 days), casual days, annual days.'],
+        ['Leave encashment', 'Days and amount confirmed this month (extra on this payslip), the list of encashment '
+                             'records, and the linked salary adjustment.'],
         ['Hiring and audit documents', 'One line per document with a file attachment.'],
     ], [3.8, 12.6]))
     s.append(section('3.2 Create a new employee'))
@@ -877,8 +897,9 @@ def build_story():
         'Open %s and click New.' % menu('Tarco HRIS > Leave > Official holidays'),
         'Enter the name and the original date.',
         'If the holiday is moved, enter the <b>Moved to</b> date. The <b>Observed</b> date is the one used everywhere.',
-        'Click <b>Publish on calendar</b> so Odoo working time and leave durations take it into account. Publish '
-        'again after moving a date.',
+        'Click <b>Publish on calendar</b>. Status becomes <b>Published</b>, the button is replaced by '
+        '<b>Update on calendar</b> / <b>Remove from calendar</b>, and a company time off is created on the working '
+        'calendar for the observed date. After you move a date, click Update on calendar.',
     ]))
     s.append(section('6.5 Leave encashment (selling leave)'))
     s.append(steps([
@@ -1147,8 +1168,8 @@ def build_story():
     s.append(tip('Choose one employee to get the leave, penalty or overtime history for the employee\'s file.'))
     s.append(section('13.2 Employee file report'))
     s.append(p('Click <b>Print file</b> on an employee, or open %s. Tick the sections to include (personal data, job, '
-               'salary, documents, contract, leave, attendance, penalties, rewards, advances, KPIs) and click '
-               '<b>Print</b>.' % menu('Reports > Employee file report')))
+               'salary, documents, contract, leave including this month\'s encashment, attendance, penalties, rewards, '
+               'advances, KPIs) and click <b>Print</b>.' % menu('Reports > Employee file report')))
     s.append(section('13.3 Arabic font on printed PDFs'))
     s.append(p('All Tarco HRIS PDF reports — period reports, the employee file and the mission order — are printed '
                'with <b>IBM Plex Sans Arabic</b>, so Arabic names, legal texts and headings stay clear next to the '
@@ -1173,6 +1194,7 @@ def build_story():
     # 15 Daily routine
     s.append(chapter('15. Daily and monthly routine'))
     s.append(table(['When', 'Who', 'Task'], [
+        ['Daily', 'HR and employees', 'Open the HRIS dashboard and work every tile that is not zero.'],
         ['Daily', 'HR', 'Check activities for probation and renewal alerts. Fix missing checkouts in Attendance.'],
         ['Daily', 'Managers', 'Request leave and missions for the team.'],
         ['Daily', 'HR', 'Approve leave and missions.'],
@@ -1181,7 +1203,8 @@ def build_story():
         ['Month end', 'HR', 'Create and confirm the overtime batch.'],
         ['Month end', 'HR', 'Post tax and insurance for employees without Adjust taxes automatically. The others '
                             'are posted by the system at the start of the month.'],
-        ['Month end', 'HR', 'Confirm rewards, advances and encashments, then run payroll.'],
+        ['Month end', 'HR', 'Confirm rewards, advances and encashments. On each employee, check Encashment this month '
+                            'before running payroll.'],
         ['Month end', 'HR', 'Print the monthly reports.'],
         ['Year start', 'HR', 'Enter official holidays and apply the leave scheme to all employees.'],
         ['Each review period', 'Managers', 'Fill KPI reviews.'],
@@ -1210,9 +1233,18 @@ def build_story():
                                                        'generate the same dates again. Drafts are updated, not duplicated.'],
         ['Confirm selected does nothing.', 'Only Draft rows are confirmed. Already confirmed or cancelled records '
                                            'are skipped.'],
-        ['Penalty, reward or advance is not on the payslip.', 'Make sure the record is confirmed, the payslip period '
-                                                              'covers the date, and the structure has the Tarco rules.'],
+        ['Penalty, reward, encashment or advance is not on the payslip.', 'Make sure the record is confirmed, the '
+                                                                          'payslip period covers the date, and the '
+                                                                          'structure has the Tarco rules. Encashment '
+                                                                          'this month on the HR File page must be '
+                                                                          'greater than zero.'],
         ['Cannot save an advance.', 'The monthly instalment is higher than the gross salary. Add instalments.'],
+        ['Renewals due shows everyone, or the wrong people.', 'The list uses the Contract end date on the Payroll page, '
+                                                              'not the automatic annual review date. Set that end date. '
+                                                              'Open-ended contracts (no end date) are not listed.'],
+        ['Probation ending is empty or shows everyone.', 'The list uses the trial / probation end date on the Payroll '
+                                                         'page, due in the next 10 days. Save the employee so the HR '
+                                                         'File probation end is copied to Payroll, or set it on Payroll.'],
         ['Probation date did not change with the hire date.', 'Probation set manually is ticked. Untick it and set '
                                                              'the hire date again.'],
         ['No contract alert was received.', 'The alert is sent once per date. Make sure the employee and manager have '

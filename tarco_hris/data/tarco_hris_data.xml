@@ -13,7 +13,9 @@
             <field name="country_id" eval="False"/>
             <field name="available_in_attachments" eval="True"/>
         </record>
+    </data>
 
+    <data noupdate="1">
         <record id="leave_type_annual" model="hr.leave.type">
             <field name="name">Annual Leave / اعتيادي</field>
             <field name="tarco_kind">annual</field>
@@ -48,9 +50,6 @@
             <field name="leave_validation_type">hr</field>
             <field name="request_unit">day</field>
         </record>
-    </data>
-
-    <data noupdate="1">
         <record id="seq_tarco_onboarding" model="ir.sequence">
             <field name="name">Tarco Onboarding</field>
             <field name="code">tarco.hr.onboarding</field>

@@ -31,3 +31,15 @@ access_tarco_hr_employee_report_wizard,tarco.hr.employee.report.wizard,model_tar
 access_tarco_hr_period_report_wizard,tarco.hr.period.report.wizard,model_tarco_hr_period_report_wizard,hr.group_hr_user,1,1,1,1
 access_tarco_hr_penalty_generate_wizard,tarco.hr.penalty.generate.wizard,model_tarco_hr_penalty_generate_wizard,hr.group_hr_user,1,1,1,1
 access_tarco_hr_demo_wizard,tarco.hr.demo.wizard,model_tarco_hr_demo_wizard,hr.group_hr_user,1,1,1,1
+access_tarco_hr_dashboard_user,tarco.hr.dashboard user,model_tarco_hr_dashboard,base.group_user,1,1,1,1
+access_tarco_hr_attendance_day_user,tarco.hr.attendance.day user,model_tarco_hr_attendance_day,base.group_user,1,0,0,0
+access_tarco_hr_overtime_user,tarco.hr.overtime user,model_tarco_hr_overtime,base.group_user,1,0,0,0
+access_tarco_hr_overtime_line_user,tarco.hr.overtime.line user,model_tarco_hr_overtime_line,base.group_user,1,0,0,0
+access_tarco_hr_penalty_user,tarco.hr.penalty user,model_tarco_hr_penalty,base.group_user,1,0,0,0
+access_tarco_hr_penalty_line_user,tarco.hr.penalty.line user,model_tarco_hr_penalty_line,base.group_user,1,0,0,0
+access_tarco_hr_reward_user,tarco.hr.reward user,model_tarco_hr_reward,base.group_user,1,0,0,0
+access_tarco_hr_advance_user,tarco.hr.advance user,model_tarco_hr_advance,base.group_user,1,0,0,0
+access_tarco_hr_advance_line_user,tarco.hr.advance.line user,model_tarco_hr_advance_line,base.group_user,1,0,0,0
+access_tarco_hr_leave_encashment_user,tarco.hr.leave.encashment user,model_tarco_hr_leave_encashment,base.group_user,1,0,0,0
+access_tarco_hr_shift_user,tarco.hr.shift user,model_tarco_hr_shift,base.group_user,1,0,0,0
+access_tarco_hr_public_holiday_user,tarco.hr.public.holiday user,model_tarco_hr_public_holiday,base.group_user,1,0,0,0
