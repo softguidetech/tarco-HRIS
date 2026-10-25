@@ -26,6 +26,9 @@
                 <button name="action_tarco_open_advances" type="object" class="oe_stat_button" icon="fa-money" groups="hr.group_hr_user">
                     <field name="tarco_advance_count" widget="statinfo" string="Advances"/>
                 </button>
+                <button name="action_tarco_open_encashment" type="object" class="oe_stat_button" icon="fa-calendar" groups="hr.group_hr_user">
+                    <field name="tarco_encashment_count" widget="statinfo" string="Encashment"/>
+                </button>
                 <button name="action_tarco_open_kpi" type="object" class="oe_stat_button" icon="fa-line-chart" groups="hr.group_hr_user">
                     <field name="tarco_kpi_count" widget="statinfo" string="KPIs"/>
                 </button>
@@ -64,7 +67,9 @@
                     <group string="Contract">
                         <group>
                             <field name="tarco_trial_date_end"/>
+                            <field name="tarco_payroll_trial_end"/>
                             <field name="tarco_trial_manual"/>
+                            <field name="tarco_contract_date_end"/>
                             <field name="tarco_renewal_date"/>
                             <field name="tarco_renewal_manual"/>
                             <field name="tarco_due_kind"/>
@@ -97,6 +102,32 @@
                         <field name="tarco_leave_scheme"/>
                         <field name="tarco_casual_days"/>
                         <field name="tarco_regular_days"/>
+                    </group>
+                    <group string="Leave encashment on this month's payroll">
+                        <group>
+                            <field name="tarco_encashment_month_days"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="tarco_encashment_month_amount"/>
+                        </group>
+                        <group>
+                            <div class="text-muted">
+                                Confirmed sold leave in this calendar month. The amount is posted as a salary
+                                adjustment (Tarco Earning) and is paid extra on this month's payslip.
+                            </div>
+                        </group>
+                    </group>
+                    <group string="Leave encashment records">
+                        <field name="tarco_encashment_ids" nolabel="1" colspan="2">
+                            <list>
+                                <field name="name"/>
+                                <field name="encash_date"/>
+                                <field name="days"/>
+                                <field name="currency_id" column_invisible="1"/>
+                                <field name="amount"/>
+                                <field name="state"/>
+                                <field name="salary_attachment_id" optional="show" string="Salary adjustment"/>
+                            </list>
+                        </field>
                     </group>
                     <div>
                         <button name="action_tarco_apply_leave_scheme" type="object" string="Apply leave scheme" class="btn-secondary"/>
@@ -148,7 +179,7 @@
             <xpath expr="//search" position="inside">
                 <separator/>
                 <filter string="Probation ending (10 days)" name="probation_due" domain="[('tarco_due_kind', '=', 'probation')]"/>
-                <filter string="Renewal due (10 days)" name="renewal_due" domain="[('tarco_due_kind', '=', 'renewal')]"/>
+                <filter string="Contract expiry (10 days)" name="renewal_due" domain="[('tarco_due_kind', '=', 'renewal')]"/>
                 <filter string="Resigned" name="resigned" domain="[('tarco_resignation_date', '!=', False)]"/>
             </xpath>
         </field>
@@ -165,8 +196,10 @@
                 <field name="section_id"/>
                 <field name="job_id"/>
                 <field name="tarco_hire_date"/>
-                <field name="tarco_trial_date_end"/>
-                <field name="tarco_renewal_date"/>
+                <field name="tarco_payroll_trial_end"/>
+                <field name="tarco_trial_date_end" optional="hide"/>
+                <field name="tarco_contract_date_end"/>
+                <field name="tarco_renewal_date" optional="hide"/>
                 <field name="tarco_due_kind"/>
                 <field name="tarco_resignation_date"/>
                 <field name="tarco_rehire_date"/>

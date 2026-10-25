@@ -69,4 +69,30 @@
             </form>
         </field>
     </record>
+
+    <record id="view_tarco_demo_wizard" model="ir.ui.view">
+        <field name="name">tarco.hr.demo.wizard.form</field>
+        <field name="model">tarco.hr.demo.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Demo data">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Tarco HRIS demo data</h1>
+                    </div>
+                    <group>
+                        <field name="demo_active"/>
+                    </group>
+                    <div class="text-muted">
+                        <p>Tick <b>Activate demo data</b> and click Apply to create sample records in every Tarco HRIS section: employees and documents, contracts, attendance, leave, holidays, missions, overtime, penalties, rewards, advances, recruitment, KPIs and salary adjustments.</p>
+                        <p>Untick it and click Apply to remove <b>only</b> those sample records. Records you created yourself are not deleted.</p>
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_apply" type="object" string="Apply" class="btn-primary"
+                            confirm="This loads or removes all Tarco HRIS demo records. Continue?"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>

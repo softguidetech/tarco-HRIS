@@ -101,6 +101,7 @@ class TarcoHrLeaveEncashment(models.Model):
 
     name = fields.Char(default='/', copy=False)
     employee_id = fields.Many2one('hr.employee', required=True, tracking=True)
+    employee_code = fields.Char(related='employee_id.employee_code')
     company_id = fields.Many2one(related='employee_id.company_id', store=True)
     currency_id = fields.Many2one(related='company_id.currency_id')
     department_id = fields.Many2one(related='employee_id.department_id', store=True)

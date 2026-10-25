@@ -1,0 +1,42 @@
+@font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    src: url('/tarco_hris/static/src/fonts/IBMPlexSansArabic-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    src: url('/tarco_hris/static/src/fonts/IBMPlexSansArabic-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    src: url('/tarco_hris/static/src/fonts/IBMPlexSansArabic-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    src: url('/tarco_hris/static/src/fonts/IBMPlexSansArabic-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+.o_tarco_hris_report,
+.o_tarco_hris_report h1,
+.o_tarco_hris_report h2,
+.o_tarco_hris_report h3,
+.o_tarco_hris_report h4,
+.o_tarco_hris_report h5,
+.o_tarco_hris_report p,
+.o_tarco_hris_report td,
+.o_tarco_hris_report th,
+.o_tarco_hris_report span,
+.o_tarco_hris_report div,
+.o_tarco_hris_report strong,
+.o_tarco_hris_report b,
+.o_tarco_hris_report small,
+.o_tarco_hris_report li {
+    font-family: 'IBM Plex Sans Arabic', 'DejaVu Sans', sans-serif !important;
+}

@@ -30,6 +30,8 @@
         <field name="res_model">hr.employee</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_employee_contract_list"/>
+        <field name="search_view_id" ref="hr.view_employee_filter"/>
+        <field name="domain">[('tarco_due_kind', '=', 'probation')]</field>
         <field name="context">{'search_default_probation_due': 1}</field>
     </record>
     <menuitem id="menu_tarco_probation" name="Probation ending" parent="menu_tarco_contracts" action="action_tarco_probation" sequence="20"/>
@@ -38,6 +40,8 @@
         <field name="res_model">hr.employee</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_employee_contract_list"/>
+        <field name="search_view_id" ref="hr.view_employee_filter"/>
+        <field name="domain">[('tarco_due_kind', '=', 'renewal')]</field>
         <field name="context">{'search_default_renewal_due': 1}</field>
     </record>
     <menuitem id="menu_tarco_renewal" name="Renewals due" parent="menu_tarco_contracts" action="action_tarco_renewal" sequence="30"/>
@@ -171,4 +175,13 @@
         <field name="code">action = model._tarco_ensure_rules()</field>
     </record>
     <menuitem id="menu_tarco_ensure_rules" name="Create payroll rules" parent="menu_tarco_reports" action="action_tarco_ensure_rules" sequence="90" groups="hr.group_hr_manager"/>
+
+    <menuitem id="menu_tarco_configuration" name="Configuration" parent="menu_tarco_hris_root" sequence="200"/>
+    <record id="action_tarco_demo" model="ir.actions.act_window">
+        <field name="name">Demo data</field>
+        <field name="res_model">tarco.hr.demo.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <menuitem id="menu_tarco_demo" name="Demo data" parent="menu_tarco_configuration" action="action_tarco_demo" sequence="10"/>
 </odoo>

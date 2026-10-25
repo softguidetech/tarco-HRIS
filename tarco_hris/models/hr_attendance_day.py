@@ -3,9 +3,9 @@ from datetime import datetime, time, timedelta
 
 import pytz
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
-from .tarco_common import tarco_hourly_wage
+from .tarco_common import format_clock, tarco_hourly_wage
 
 
 class TarcoHrAttendanceDay(models.Model):
@@ -215,6 +215,63 @@ class TarcoHrAttendanceDay(models.Model):
             'holiday_id': holiday.id if holiday else False,
             'note': note,
         }
+
+    def attendance_penalty_reason(self, kind):
+        """Plain-language reason so HR can check the penalty against attendance."""
+        self.ensure_one()
+        employee = self.employee_id
+        shift = self.shift_id
+        start = shift.hour_from if shift else 8.0
+        end = shift.hour_to if shift else 16.0
+        grace = shift.grace_minutes if shift else 15
+        late_after = start + (grace / 60.0)
+        check_in = self._as_local(employee, self.check_in)
+        check_out = self._as_local(employee, self.check_out)
+        facts = {
+            'kind': _('LATENESS') if kind == 'late' else _('ABSENCE'),
+            'date': self.work_date.strftime('%A %d %b %Y') if self.work_date else '-',
+            'emp': employee.name or '-',
+            'code': employee.employee_code or '-',
+            'dept': employee.department_id.name or _('no department'),
+            'shift': (
+                _('%(name)s, %(start)s–%(end)s') % {
+                    'name': shift.name,
+                    'start': format_clock(start),
+                    'end': format_clock(end),
+                }
+                if shift else _('no shift assigned — treated as working day 08:00–16:00')
+            ),
+            'grace': grace,
+            'late_after': format_clock(late_after),
+            'cin': check_in.strftime('%H:%M') if check_in else _('none'),
+            'cout': check_out.strftime('%H:%M') if check_out else _('none'),
+            'late': int(round(self.late_minutes or 0.0)),
+            'status': dict(self._fields['status']._description_selection(self.env)).get(self.status, self.status),
+            'leave': self.leave_id.holiday_status_id.name if self.leave_id else _('no'),
+            'mission': self.mission_id.place if self.mission_id else _('no'),
+            'holiday': self.holiday_id.name if self.holiday_id else _('no'),
+            'rest': _('yes') if shift and self.work_date and shift.is_rest(self.work_date) else _('no'),
+        }
+        if kind == 'late':
+            return _(
+                '%(kind)s on %(date)s — %(emp)s [%(code)s] checked in at %(cin)s, '
+                '%(late)s minutes after the %(late_after)s grace limit.\n'
+                'Department: %(dept)s.\n'
+                'Shift: %(shift)s. Grace: %(grace)s minutes (late after %(late_after)s).\n'
+                'Check-in: %(cin)s. Check-out: %(cout)s.\n'
+                'Leave: %(leave)s. Mission: %(mission)s. Public holiday: %(holiday)s. Rest day: %(rest)s.\n'
+                'Attendance day status: %(status)s. Late minutes on that day: %(late)s.\n'
+                'Check Employees > Tarco HRIS > Attendance days for this employee and date.'
+            ) % facts
+        return _(
+            '%(kind)s on %(date)s — %(emp)s [%(code)s] has no check-in on a working day.\n'
+            'Department: %(dept)s.\n'
+            'Shift: %(shift)s.\n'
+            'Check-in: %(cin)s. Check-out: %(cout)s.\n'
+            'Leave: %(leave)s. Mission: %(mission)s. Public holiday: %(holiday)s. Rest day: %(rest)s.\n'
+            'Attendance day status: %(status)s. A working day with no punch is treated as absence.\n'
+            'Check Employees > Tarco HRIS > Attendance days for this employee and date.'
+        ) % facts
 
     @api.model
     def _cron_tarco_daily(self):

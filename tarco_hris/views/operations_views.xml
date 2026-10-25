@@ -156,11 +156,13 @@
                     <group>
                         <field name="name"/>
                         <field name="employee_id"/>
+                        <field name="employee_code"/>
                         <field name="encash_date"/>
                         <field name="days"/>
                         <field name="currency_id" invisible="1"/>
                         <field name="daily_rate"/>
                         <field name="amount"/>
+                        <field name="salary_attachment_id" string="Salary adjustment"/>
                     </group>
                 </sheet>
                 <chatter/>
@@ -174,10 +176,12 @@
             <list>
                 <field name="name"/>
                 <field name="employee_id"/>
+                <field name="employee_code" optional="show"/>
                 <field name="encash_date"/>
                 <field name="days"/>
                 <field name="amount"/>
                 <field name="state"/>
+                <field name="salary_attachment_id" optional="hide" string="Salary adjustment"/>
             </list>
         </field>
     </record>
@@ -351,6 +355,7 @@
                 <header>
                     <button name="action_fill_department" type="object" string="Add department" invisible="state != 'draft'"/>
                     <button name="action_confirm" type="object" string="Confirm" invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_refresh_reason" type="object" string="Fill reason from attendance"/>
                     <button name="action_cancel" type="object" string="Cancel" invisible="state != 'confirmed'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
@@ -365,7 +370,7 @@
                         <field name="currency_id" invisible="1"/>
                         <field name="total_amount"/>
                     </group>
-                    <field name="reason"/>
+                    <field name="reason" placeholder="Generated penalties fill this with the attendance facts to verify."/>
                     <field name="line_ids">
                         <list editable="bottom">
                             <field name="employee_id"/>
@@ -388,9 +393,15 @@
         <field name="model">tarco.hr.penalty</field>
         <field name="arch" type="xml">
             <list>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm selected" class="btn-primary"
+                            confirm="Confirm the selected draft penalties and post them to payroll?"/>
+                    <button name="action_refresh_reason" type="object" string="Fill reason from attendance"/>
+                </header>
                 <field name="name"/>
                 <field name="penalty_date"/>
                 <field name="rule_id"/>
+                <field name="reason"/>
                 <field name="total_amount"/>
                 <field name="state"/>
             </list>
@@ -543,5 +554,14 @@
                 <field name="state"/>
             </list>
         </field>
+    </record>
+
+    <record id="action_server_tarco_confirm_penalties" model="ir.actions.server">
+        <field name="name">Confirm penalties</field>
+        <field name="model_id" ref="model_tarco_hr_penalty"/>
+        <field name="binding_model_id" ref="model_tarco_hr_penalty"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_confirm()</field>
     </record>
 </odoo>

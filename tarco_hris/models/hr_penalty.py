@@ -57,7 +57,11 @@ class TarcoHrPenalty(models.Model):
     rule_id = fields.Many2one('tarco.hr.penalty.rule', required=True, tracking=True)
     penalty_date = fields.Date(required=True, default=fields.Date.context_today, tracking=True)
     start_date = fields.Date(string='Applied from', default=fields.Date.context_today)
-    reason = fields.Text(required=True)
+    reason = fields.Text(
+        string='Reason',
+        required=True,
+        help='Why this penalty applies. Generated penalties list the attendance facts to check.',
+    )
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
     department_id = fields.Many2one('hr.department', string='Fill from department')
     line_ids = fields.One2many('tarco.hr.penalty.line', 'penalty_id')
@@ -103,7 +107,8 @@ class TarcoHrPenalty(models.Model):
             ]})
 
     def action_confirm(self):
-        for penalty in self:
+        drafts = self.filtered(lambda penalty: penalty.state == 'draft')
+        for penalty in drafts:
             for line in penalty.line_ids:
                 if line.salary_attachment_id or line.amount <= 0:
                     continue
@@ -113,9 +118,60 @@ class TarcoHrPenalty(models.Model):
                 )
                 line.salary_attachment_id = attachment
             penalty.state = 'confirmed'
+        if not drafts:
+            message = _('No draft penalties to confirm.')
+            kind = 'warning'
+        else:
+            message = _('%s penalty/penalties confirmed and posted to payroll.') % len(drafts)
+            kind = 'success'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': kind,
+                'message': message,
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
+        }
 
     def action_cancel(self):
         self.write({'state': 'cancel'})
+
+    def action_refresh_reason(self):
+        Day = self.env['tarco.hr.attendance.day']
+        updated = self.env['tarco.hr.penalty']
+        for penalty in self:
+            if penalty.state == 'cancel' or not penalty.line_ids:
+                continue
+            if penalty.rule_id.category not in ('late', 'absence'):
+                continue
+            kind = 'late' if penalty.rule_id.category == 'late' else 'absence'
+            parts = []
+            for line in penalty.line_ids:
+                day = Day.search([
+                    ('employee_id', '=', line.employee_id.id),
+                    ('work_date', '=', penalty.penalty_date),
+                ], limit=1)
+                if day:
+                    parts.append(day.attendance_penalty_reason(kind))
+            if parts:
+                penalty.reason = '\n\n'.join(parts)
+                updated |= penalty
+        if not updated:
+            message = _('No attendance facts found to fill the reason.')
+            kind = 'warning'
+        else:
+            message = _('Reason updated from attendance for %s penalty/penalties.') % len(updated)
+            kind = 'success'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': kind,
+                'message': message,
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
+        }
 
 
 class TarcoHrPenaltyLine(models.Model):

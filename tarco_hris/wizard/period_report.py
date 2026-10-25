@@ -42,21 +42,26 @@ class TarcoHrPenaltyGenerateWizard(models.TransientModel):
 
     def _generate(self, days, rule, late):
         created = self.env['tarco.hr.penalty']
+        kind = 'late' if late else 'absence'
         for day in days:
-            existing = self.env['tarco.hr.penalty.line'].search_count([
+            reason = day.attendance_penalty_reason(kind)
+            existing = self.env['tarco.hr.penalty.line'].search([
                 ('employee_id', '=', day.employee_id.id),
                 ('penalty_id.rule_id', '=', rule.id),
                 ('penalty_id.penalty_date', '=', day.work_date),
                 ('penalty_id.state', '!=', 'cancel'),
-            ])
+            ], limit=1)
             if existing:
+                if existing.penalty_id.state == 'draft':
+                    existing.penalty_id.reason = reason
+                    created |= existing.penalty_id
                 continue
             hours = day.late_minutes / 60.0 if late else 0.0
             created |= self.env['tarco.hr.penalty'].create({
                 'rule_id': rule.id,
                 'penalty_date': day.work_date,
                 'start_date': day.work_date,
-                'reason': rule.reason_text,
+                'reason': reason,
                 'company_id': day.company_id.id,
                 'line_ids': [(0, 0, {
                     'employee_id': day.employee_id.id,
@@ -179,15 +184,15 @@ class TarcoHrPeriodReportWizard(models.TransientModel):
     def _section_contract_renewal(self):
         rows = []
         employees = self._employees().filtered(
-            lambda employee: employee.tarco_renewal_date and self._in_period(employee.tarco_renewal_date)
+            lambda employee: employee.tarco_contract_date_end and self._in_period(employee.tarco_contract_date_end)
         )
         for employee in employees:
             rows.append(self._employee_row_start(employee) + [
                 str(employee.tarco_hire_date or ''),
-                str(employee.tarco_renewal_date or ''),
+                str(employee.tarco_contract_date_end or ''),
                 str(employee.tarco_trial_date_end or ''),
             ])
-        return [(_('Contracts to renew'), ['Code', 'Name', 'Department', 'Section', 'Hire date', 'Renewal', 'Probation end'], rows)]
+        return [(_('Contracts to renew'), ['Code', 'Name', 'Department', 'Section', 'Hire date', 'Contract end', 'Probation end'], rows)]
 
     def _section_service_duration(self):
         rows = []

@@ -45,8 +45,22 @@ class HrEmployee(models.Model):
     tarco_hire_date = fields.Date(string='Hire Date', tracking=True, groups='hr.group_hr_user')
     tarco_trial_manual = fields.Boolean(string='Probation Set Manually', groups='hr.group_hr_user')
     tarco_trial_date_end = fields.Date(string='Probation End', tracking=True, groups='hr.group_hr_user')
+    tarco_payroll_trial_end = fields.Date(
+        related='version_id.trial_date_end',
+        string='Probation End (Payroll)',
+        store=True,
+        groups='hr.group_hr_user',
+        help='End of trial period on the Payroll page. Probation ending uses this date only.',
+    )
     tarco_renewal_manual = fields.Boolean(string='Renewal Set Manually', groups='hr.group_hr_user')
     tarco_renewal_date = fields.Date(string='Annual Renewal Date', tracking=True, groups='hr.group_hr_user')
+    tarco_contract_date_end = fields.Date(
+        related='version_id.contract_date_end',
+        string='Contract End',
+        store=True,
+        groups='hr.group_hr_user',
+        help='End date of the current contract on the Payroll page. Renewals due uses this date only.',
+    )
     tarco_resignation_date = fields.Date(string='Resignation Date', tracking=True, copy=False, groups='hr.group_hr_user')
     tarco_rehire_date = fields.Date(string='Rehire Date', tracking=True, copy=False, groups='hr.group_hr_user')
     tarco_probation_alerted = fields.Boolean(copy=False, groups='hr.group_hr_user')
@@ -105,12 +119,27 @@ class HrEmployee(models.Model):
         groups='hr.group_hr_user',
     )
     tarco_document_ids = fields.One2many('tarco.hr.document', 'employee_id', string='Documents', groups='hr.group_hr_user')
+    tarco_encashment_ids = fields.One2many(
+        'tarco.hr.leave.encashment', 'employee_id', string='Leave Encashment', groups='hr.group_hr_user',
+    )
     tarco_document_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
     tarco_mission_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
     tarco_penalty_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
     tarco_reward_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
     tarco_advance_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
     tarco_kpi_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_encashment_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_encashment_month_days = fields.Float(
+        string='Encashment Days This Month',
+        compute='_compute_tarco_encashment_month',
+        groups='hr.group_hr_user',
+    )
+    tarco_encashment_month_amount = fields.Monetary(
+        string='Encashment This Month',
+        compute='_compute_tarco_encashment_month',
+        groups='hr.group_hr_user',
+        help='Confirmed leave encashment in the current month. This extra amount is posted to this month\'s payslip.',
+    )
 
     @api.model
     def _get_certificate_selection(self):
@@ -160,16 +189,16 @@ class HrEmployee(models.Model):
                 delta.years, delta.months, delta.days,
             )
 
-    @api.depends('tarco_trial_date_end', 'tarco_renewal_date', 'tarco_resignation_date')
+    @api.depends('tarco_payroll_trial_end', 'tarco_contract_date_end', 'tarco_resignation_date')
     def _compute_tarco_due_kind(self):
         today = fields.Date.context_today(self)
         limit = today + timedelta(days=10)
         for employee in self:
             kind = False
             if not employee.tarco_resignation_date:
-                if employee.tarco_trial_date_end and today <= employee.tarco_trial_date_end <= limit:
+                if employee.tarco_payroll_trial_end and today <= employee.tarco_payroll_trial_end <= limit:
                     kind = 'probation'
-                elif employee.tarco_renewal_date and today <= employee.tarco_renewal_date <= limit:
+                elif employee.tarco_contract_date_end and today <= employee.tarco_contract_date_end <= limit:
                     kind = 'renewal'
             employee.tarco_due_kind = kind
 
@@ -178,14 +207,16 @@ class HrEmployee(models.Model):
         limit = today + timedelta(days=10)
         if value == 'probation':
             return [
-                ('tarco_trial_date_end', '>=', today),
-                ('tarco_trial_date_end', '<=', limit),
+                ('tarco_payroll_trial_end', '!=', False),
+                ('tarco_payroll_trial_end', '>=', today),
+                ('tarco_payroll_trial_end', '<=', limit),
                 ('tarco_resignation_date', '=', False),
             ]
         if value == 'renewal':
             return [
-                ('tarco_renewal_date', '>=', today),
-                ('tarco_renewal_date', '<=', limit),
+                ('tarco_contract_date_end', '!=', False),
+                ('tarco_contract_date_end', '>=', today),
+                ('tarco_contract_date_end', '<=', limit),
                 ('tarco_resignation_date', '=', False),
             ]
         return [('id', '=', 0)] if operator == '=' else []
@@ -208,6 +239,24 @@ class HrEmployee(models.Model):
             employee.tarco_kpi_count = self.env['tarco.hr.kpi.review'].search_count([
                 ('employee_id', '=', employee.id),
             ])
+            employee.tarco_encashment_count = self.env['tarco.hr.leave.encashment'].search_count([
+                ('employee_id', '=', employee.id),
+            ])
+
+    def _compute_tarco_encashment_month(self):
+        today = fields.Date.context_today(self)
+        month_start = today.replace(day=1)
+        month_end = month_start + relativedelta(months=1, days=-1)
+        Encash = self.env['tarco.hr.leave.encashment']
+        for employee in self:
+            records = Encash.search([
+                ('employee_id', '=', employee.id),
+                ('encash_date', '>=', month_start),
+                ('encash_date', '<=', month_end),
+                ('state', '=', 'confirmed'),
+            ])
+            employee.tarco_encashment_month_days = sum(records.mapped('days'))
+            employee.tarco_encashment_month_amount = sum(records.mapped('amount'))
 
     def _compute_display_name(self):
         super()._compute_display_name()
@@ -525,6 +574,9 @@ class HrEmployee(models.Model):
     def action_tarco_open_kpi(self):
         return self._tarco_open('tarco.hr.kpi.review', [('employee_id', 'in', self.ids)])
 
+    def action_tarco_open_encashment(self):
+        return self._tarco_open('tarco.hr.leave.encashment', [('employee_id', 'in', self.ids)])
+
     def _tarco_open(self, model, domain):
         return {
             'type': 'ir.actions.act_window',
@@ -554,19 +606,19 @@ class HrEmployee(models.Model):
             ('active', '=', True),
             ('tarco_resignation_date', '=', False),
             '|',
-            '&', ('tarco_trial_date_end', '>=', today), ('tarco_trial_date_end', '<=', limit),
-            '&', ('tarco_renewal_date', '>=', today), ('tarco_renewal_date', '<=', limit),
+            '&', ('tarco_payroll_trial_end', '>=', today), ('tarco_payroll_trial_end', '<=', limit),
+            '&', ('tarco_contract_date_end', '>=', today), ('tarco_contract_date_end', '<=', limit),
         ])
         for employee in employees:
             employee._tarco_alert_date(
-                employee.tarco_trial_date_end,
+                employee.tarco_payroll_trial_end,
                 'tarco_probation_alerted',
-                _('Probation ends on %s') % employee.tarco_trial_date_end,
+                _('Probation ends on %s') % employee.tarco_payroll_trial_end,
             )
             employee._tarco_alert_date(
-                employee.tarco_renewal_date,
+                employee.tarco_contract_date_end,
                 'tarco_renewal_alerted',
-                _('Contract renewal is due on %s') % employee.tarco_renewal_date,
+                _('Contract expires on %s') % employee.tarco_contract_date_end,
             )
 
     def _tarco_alert_date(self, due, flag, summary):

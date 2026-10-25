@@ -30,3 +30,4 @@ access_tarco_hr_kpi_output_user,tarco.hr.kpi.output user,model_tarco_hr_kpi_outp
 access_tarco_hr_employee_report_wizard,tarco.hr.employee.report.wizard,model_tarco_hr_employee_report_wizard,hr.group_hr_user,1,1,1,1
 access_tarco_hr_period_report_wizard,tarco.hr.period.report.wizard,model_tarco_hr_period_report_wizard,hr.group_hr_user,1,1,1,1
 access_tarco_hr_penalty_generate_wizard,tarco.hr.penalty.generate.wizard,model_tarco_hr_penalty_generate_wizard,hr.group_hr_user,1,1,1,1
+access_tarco_hr_demo_wizard,tarco.hr.demo.wizard,model_tarco_hr_demo_wizard,hr.group_hr_user,1,1,1,1

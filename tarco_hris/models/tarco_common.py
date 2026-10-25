@@ -91,3 +91,11 @@ def markup_sections(sections):
 
 def money(amount):
     return '%.2f' % (amount or 0.0)
+
+
+def format_clock(value):
+    if value is None or value is False:
+        return '-'
+    total = int(round(float(value) * 60))
+    hours, minutes = divmod(abs(total), 60)
+    return '%02d:%02d' % (hours, minutes)

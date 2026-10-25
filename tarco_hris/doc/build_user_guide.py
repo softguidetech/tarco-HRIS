@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.5'
+VERSION = 'Module version 19.0.1.0.12'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -81,11 +81,11 @@ CHAPTER_BLURBS = {
     6: 'Leave types, yearly balance, approvals, holidays and encashment.',
     7: 'Business missions for one or many employees, in any currency, with a printable mission order.',
     8: 'Overtime batches calculated from fingerprint punches.',
-    9: 'Labour Law penalties, automatic lateness and absence penalties, and rewards.',
+    9: 'Labour Law penalties, generate from attendance, a checkable reason on each draft, and bulk confirm.',
     10: 'Short advances, long-term loans and instalment schedules.',
     11: 'Headcount, public application link, ranking and interviews.',
     12: 'Question templates, scores, outputs and overall achievement.',
-    13: 'Period reports in PDF and Excel, and the employee file report.',
+    13: 'Period reports in PDF and Excel, the employee file report, and IBM Plex Sans Arabic on every HRIS PDF.',
     14: 'How HR records reach the payslip.',
     15: 'A checklist for every day, month and year.',
     16: 'Common problems and how to solve them.',
@@ -319,7 +319,7 @@ def cover_tiles():
         ('Attendance', 'ZKTeco fingerprint via BioTime, shifts, lateness after 08:15.'),
         ('Leave', '21 or 30 day schemes, sick leave, holidays, encashment.'),
         ('Missions and overtime', 'Group missions, overtime at 1.5x and 2x.'),
-        ('Penalties and rewards', 'Labour Law 1997 rules, automatic penalties.'),
+        ('Penalties and rewards', 'Generate from attendance, checkable reasons, bulk confirm.'),
         ('Advances and loans', 'Instalments capped at the gross salary.'),
         ('Recruitment', 'Headcount, apply link, ranked candidates.'),
         ('KPIs and reports', '20 reports in PDF and Excel.'),
@@ -535,11 +535,12 @@ def build_story():
         ['Leave', 'Leave requests, official holidays, leave encashment (sold leave).'],
         ['Missions', 'Business missions with one or many employees, in any currency, and the mission order PDF.'],
         ['Overtime', 'Overtime batches calculated from fingerprint punches.'],
-        ['Penalties and rewards', 'Penalty rules, penalties, automatic penalties from attendance, rewards.'],
+        ['Penalties and rewards', 'Penalty rules, generate from attendance, checkable reasons, bulk confirm, rewards.'],
         ['Advances and loans', 'Short advances, long-term loans, goods purchases and other deductions.'],
         ['Recruitment', 'Job positions with screening questions, and applicants.'],
         ['KPIs', 'Question templates and employee performance reviews.'],
         ['Reports', 'Period reports (PDF and Excel), employee file report, payroll rule setup.'],
+        ['Configuration', 'Demo data: load or remove sample records in every section.'],
     ], [4.2, 12.2]))
     s.append(section('1.2 Who can do what'))
     s.append(table(['Role', 'Access'], [
@@ -588,6 +589,16 @@ def build_story():
     s.append(note('Employees must have a Badge ID that matches their Employee ID in BioTime. When an employee '
                   'gets a code and the Badge ID is empty, the code is copied into it for you. A Badge ID that is '
                   'already filled is never changed.'))
+    s.append(section('2.1 Demo data'))
+    s.append(p('To try every screen with sample records, open %s. Tick <b>Activate demo data</b> and click '
+               '<b>Apply</b>. Odoo creates employees, documents, onboarding, contracts, fingerprint attendance, '
+               'leave, holidays, a mission, overtime, penalties, a reward, advances, a job with applicants, a KPI '
+               'review and the matching salary adjustments.'
+               % menu('Tarco HRIS > Configuration > Demo data')))
+    s.append(p('Untick the same box and click Apply to remove <b>only</b> those sample records. Records you created '
+               'yourself stay. Ticking Apply again while demo data is already on replaces the sample set.'))
+    s.append(note('Use demo data on a training or test database. Do not load it on the live company file if HR has '
+                  'already started real work.'))
     s.append(PageBreak())
 
     # 3 Employee file
@@ -659,7 +670,7 @@ def build_story():
         ['Onboarding notice', 'Opens a notice to the departments that prepare for the new employee.'],
         ['Print file', 'Opens the employee file report with check boxes to choose the sections.'],
         ['Register resignation / Rehire / Renew contract', 'See chapter 4.'],
-        ['Smart buttons', 'Documents, Missions, Penalties, Rewards, Advances and KPIs open the related records.'],
+        ['Smart buttons', 'Documents, Missions, Penalties, Rewards, Advances, Encashment and KPIs open the related records.'],
         ['Actions > Generate employee code', 'Creates the code from the joining month (see 3.3). Also available '
                                              'for many employees at once from the list.'],
     ], [4.6, 11.8]))
@@ -685,22 +696,30 @@ def build_story():
 
     # 4 Contracts
     s.append(chapter('4. Employment contracts'))
-    s.append(p('Contract dates are kept on the employee. Use %s to see every employee with hire, probation, renewal, '
-               'resignation and rehire dates and the length of service.' % menu('Tarco HRIS > Contracts > Contracts')))
+    s.append(p('Contract dates are kept on the employee. Use %s to see every employee with hire, probation, contract '
+               'end, resignation and rehire dates and the length of service.' % menu('Tarco HRIS > Contracts > Contracts')))
     s.append(section('4.1 Probation and renewal dates'))
     s.append(bullets([
-        '<b>Probation end</b> is set to hire date + 89 days. If you change it by hand, <b>Probation set manually</b> '
-        'is ticked and the date is no longer recalculated.',
-        '<b>Annual renewal date</b> is set to hire date + 1 year. Tick <b>Renewal set manually</b> to keep your own date.',
+        '<b>Probation end</b> is set to hire date + 89 days and is copied to the trial end date on the employee '
+        '<b>Payroll</b> page. If you change it by hand, <b>Probation set manually</b> is ticked and the date is no '
+        'longer recalculated. %s shows only employees whose <b>Payroll probation / trial end</b> falls in the next '
+        '10 days. People with no trial end date on Payroll are not listed.'
+        % menu('Contracts > Probation ending'),
+        '<b>Contract end</b> is the expiry date on the employee <b>Payroll</b> page (Odoo contract end). '
+        '%s shows only employees whose contract end falls in the next 10 days. Open-ended contracts (no end date) '
+        'and the automatic annual review date are not used for this list.'
+        % menu('Contracts > Renewals due'),
+        '<b>Annual renewal date</b> is set to hire date + 1 year for yearly review. It does not put the employee on '
+        'Renewals due. Tick <b>Renewal set manually</b> to keep your own review date.',
         'The probation end and the gross salary are copied to the Odoo contract of the employee.',
     ]))
     s.append(section('4.2 Alerts 7 to 10 days before'))
     s.append(p('Every day the scheduled action <b>Tarco HRIS: attendance and contract alerts</b> looks for probation '
-               'ends and renewals in the next 10 days. For each one it creates a to-do activity for the HR '
-               'responsible on the contract (or the manager) and emails the employee, the manager and that user. '
-               'Each date is alerted only once; changing the date resets the alert.'))
+               'ends and <b>Payroll contract end dates</b> in the next 10 days. For each one it creates a to-do '
+               'activity for the HR responsible on the contract (or the manager) and emails the employee, the manager '
+               'and that user. Each date is alerted only once; changing the date resets the alert.'))
     s.append(p('Use %s and %s to see the lists at any time. They use the search filters <b>Probation ending '
-               '(10 days)</b> and <b>Renewal due (10 days)</b>, which you can also apply on any employee list.'
+               '(10 days)</b> and <b>Contract expiry (10 days)</b>, which you can also apply on any employee list.'
                % (menu('Contracts > Probation ending'), menu('Contracts > Renewals due'))))
     s.append(section('4.3 Renew, resign and rehire'))
     s.append(table(['Action', 'How', 'Result'], [
@@ -865,9 +884,14 @@ def build_story():
     s.append(steps([
         'Open %s and click New.' % menu('Tarco HRIS > Leave > Leave encashment'),
         'Choose the employee and the number of days. The daily rate defaults to gross / 30 and can be changed.',
-        'Click <b>Confirm</b>. The amount is added to the next payslip. Reduce the remaining balance in Time Off '
-        'allocations if the sold days must be removed from it.',
+        'Click <b>Confirm</b>. The amount is posted as a salary adjustment (Tarco Earning) and is paid extra on '
+        'that month\'s payslip. Reduce the remaining balance in Time Off allocations if the sold days must be '
+        'removed from it.',
     ]))
+    s.append(p('On the employee, the <b>Encashment</b> smart button opens all leave encashment records. The '
+               '<b>HR File</b> page shows <b>Encashment days this month</b> and <b>Encashment this month</b> — the '
+               'extra amount confirmed for the current calendar month — plus the list of records and the linked '
+               'salary adjustment, same as other payroll extras.'))
     s.append(PageBreak())
 
     # 7 Missions
@@ -948,14 +972,46 @@ def build_story():
     s.append(p('Three rules are provided: <b>Lateness</b> (hours of wage), <b>Absence</b> (one day of wage) and '
                '<b>Conduct</b> (fixed amount, set it before use).'))
     s.append(section('9.2 Lateness and absence penalties from attendance'))
+    s.append(p('The wizard does not invent penalties. It reads the <b>daily attendance</b> sheet (chapter 5.3) for the '
+               'dates you choose and creates <b>one draft penalty per employee per day</b> that qualifies.'))
+    s.append(table(['Wizard option', 'Created when', 'Amount'], [
+        ['Include lateness', 'The attendance day has late minutes: check-in after shift start plus grace '
+                             '(default 08:00 + 15 minutes). Staff marked Exempt from lateness are skipped.',
+         'Late hours x hourly wage (gross / 30 / 8). Rule: Lateness.'],
+        ['Include absence', 'The attendance day status is Absent: a working day after hire and before resignation, '
+                            'with no check-in, and not on approved leave, an approved mission, a public holiday or a '
+                            'shift rest day.',
+         'One day of wage (gross / 30). Rule: Absence.'],
+    ], [3.6, 8.4, 4.4]))
+    s.append(p('A day that already has a non-cancelled penalty for the same employee, rule and date is not created '
+               'again. <b>Conduct</b> penalties are never generated here — enter those by hand (9.5).'))
+    s.append(section('9.3 Reason on each generated penalty'))
+    s.append(p('Every generated penalty fills the <b>Reason</b> field with the attendance facts so HR can check the '
+               'record against the system before confirming. The first line names the type, date, employee and code; '
+               'the following lines list:'))
+    s.append(bullets([
+        'Department, and the shift with start and end (or that no shift is assigned — treated as a working day 08:00-16:00).',
+        'Check-in and check-out times, or <b>none</b>.',
+        'For lateness: minutes after the grace limit (for example 27 minutes after 08:15).',
+        'Whether the day was leave, mission, public holiday or rest day.',
+        'The attendance day status. Open %s for that employee and date to confirm.'
+        % menu('Attendance > Daily attendance'),
+    ]))
+    s.append(p('The Reason column is shown on the penalties list. Drafts created before this text still show the old '
+               'legal sentence. Select them and click <b>Fill reason from attendance</b>, or run Generate from '
+               'attendance again on the same dates — draft reasons are updated and duplicates are not created.'))
+    s.append(section('9.4 Generate and confirm in bulk'))
     s.append(steps([
         'Open %s.' % menu('Penalties and rewards > Generate from attendance'),
         'Choose the period, optionally a department, and tick lateness and/or absence.',
-        'Click <b>Generate</b>. One draft penalty is created per late or absent day. Days that already have a penalty '
-        'are skipped.',
-        'Review the drafts and click <b>Confirm</b> on each one to apply.',
+        'Click <b>Generate</b>. The list of generated drafts opens, each with a clear reason.',
+        'Read the Reason column. Cancel any line that is not correct (for example a missing BioTime punch).',
+        'Select the drafts to apply. Click <b>Confirm selected</b> at the top of the list, or use '
+        '%s. Only Draft rows are posted to payroll; already confirmed rows are skipped.'
+        % menu('Actions > Confirm penalties'),
     ]))
-    s.append(section('9.3 Conduct penalties on one employee or a group'))
+    s.append(tip('You can confirm dozens of drafts in one click. Do not confirm a line until the reason matches Daily attendance.'))
+    s.append(section('9.5 Conduct penalties on one employee or a group'))
     s.append(steps([
         'Open %s and click New.' % menu('Penalties and rewards > Penalties'),
         'Choose the rule. The legal reason fills in automatically.',
@@ -966,7 +1022,7 @@ def build_story():
         'The <b>Repeat</b> column shows how many times the employee has received the same rule.',
         'Click <b>Confirm</b>. Each amount is deducted on the next payslip.',
     ]))
-    s.append(section('9.4 Rewards and grants'))
+    s.append(section('9.6 Rewards and grants'))
     s.append(steps([
         'Open %s and click New.' % menu('Penalties and rewards > Rewards'),
         'Choose the employee by code. The name, department, section and wage items appear.',
@@ -1093,6 +1149,10 @@ def build_story():
     s.append(p('Click <b>Print file</b> on an employee, or open %s. Tick the sections to include (personal data, job, '
                'salary, documents, contract, leave, attendance, penalties, rewards, advances, KPIs) and click '
                '<b>Print</b>.' % menu('Reports > Employee file report')))
+    s.append(section('13.3 Arabic font on printed PDFs'))
+    s.append(p('All Tarco HRIS PDF reports — period reports, the employee file and the mission order — are printed '
+               'with <b>IBM Plex Sans Arabic</b>, so Arabic names, legal texts and headings stay clear next to the '
+               'English text.'))
     s.append(PageBreak())
 
     # 14 Payroll
@@ -1116,7 +1176,8 @@ def build_story():
         ['Daily', 'HR', 'Check activities for probation and renewal alerts. Fix missing checkouts in Attendance.'],
         ['Daily', 'Managers', 'Request leave and missions for the team.'],
         ['Daily', 'HR', 'Approve leave and missions.'],
-        ['Month end', 'HR', 'Generate lateness and absence penalties and confirm them.'],
+        ['Month end', 'HR', 'Generate lateness and absence penalties, check each Reason against Daily attendance, '
+                            'then click Confirm selected.'],
         ['Month end', 'HR', 'Create and confirm the overtime batch.'],
         ['Month end', 'HR', 'Post tax and insurance for employees without Adjust taxes automatically. The others '
                             'are posted by the system at the start of the month.'],
@@ -1142,6 +1203,13 @@ def build_story():
         ['Status is Missing checkout.', 'Add the check-out in Attendance and sync again.'],
         ['Overtime amount is zero.', 'Check the salary components are filled and Overtime calculation is not '
                                      '"Do not pay overtime".'],
+        ['Too many absence drafts after Generate.', 'A wide date range or missing BioTime punches marks working days '
+                                                     'as Absent. Check Daily attendance, cancel the wrong drafts, and '
+                                                     'fix Badge IDs or punches before generating again.'],
+        ['Reason still shows the old legal sentence.', 'Select the drafts and click Fill reason from attendance, or '
+                                                       'generate the same dates again. Drafts are updated, not duplicated.'],
+        ['Confirm selected does nothing.', 'Only Draft rows are confirmed. Already confirmed or cancelled records '
+                                           'are skipped.'],
         ['Penalty, reward or advance is not on the payslip.', 'Make sure the record is confirmed, the payslip period '
                                                               'covers the date, and the structure has the Tarco rules.'],
         ['Cannot save an advance.', 'The monthly instalment is higher than the gross salary. Add instalments.'],
@@ -1150,6 +1218,9 @@ def build_story():
         ['No contract alert was received.', 'The alert is sent once per date. Make sure the employee and manager have '
                                             'work emails and that outgoing mail is configured.'],
         ['Leave balance is empty.', 'Click Apply leave scheme on the employee.'],
+        ['Demo data is still there after unticking.', 'Open %s, leave Activate demo data unticked and click Apply. '
+                                                      'Only records created as demo are removed.'
+         % menu('Tarco HRIS > Configuration > Demo data')],
         ['Code already used.', 'Each employee code must be unique, including archived employees. Clear the code and '
                                'save, or use Actions &gt; Generate employee code, to get the next free code.'],
         ['Employee has no code or an old-style code.', 'Select the employees in the list and use Actions &gt; '
