@@ -453,18 +453,52 @@ class HrEmployee(models.Model):
         casual = self.env.ref('tarco_hris.leave_type_casual', raise_if_not_found=False)
         if not annual or not casual:
             raise UserError(_('Tarco leave types are missing. Update the module.'))
+        if not self:
+            raise UserError(_('Select at least one employee.'))
         year = fields.Date.context_today(self).year
         start = fields.Date.from_string('%s-01-01' % year)
         end = fields.Date.from_string('%s-12-31' % year)
+        created = already = skipped = 0
         for employee in self:
-            self._tarco_allocate(employee, casual, employee.tarco_casual_days, start, end)
-            self._tarco_allocate(employee, annual, employee.tarco_regular_days, start, end)
-        return True
+            if employee.tarco_resignation_date:
+                skipped += 1
+                continue
+            new_count = 0
+            kept_count = 0
+            for leave_type, days in (
+                (casual, employee.tarco_casual_days),
+                (annual, employee.tarco_regular_days),
+            ):
+                allocation, was_new = self._tarco_allocate(employee, leave_type, days, start, end)
+                if was_new:
+                    new_count += 1
+                elif allocation:
+                    kept_count += 1
+            if new_count:
+                created += 1
+            elif kept_count:
+                already += 1
+            else:
+                skipped += 1
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'success' if created else 'info',
+                'message': _(
+                    'Leave scheme applied for %(year)s: %(created)s employee(s) received allocations, '
+                    '%(already)s already had this year, %(skipped)s skipped (resigned or no days).',
+                    year=year, created=created, already=already, skipped=skipped,
+                ),
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
+        }
 
     def _tarco_allocate(self, employee, leave_type, days, start, end):
+        empty = self.env['hr.leave.allocation']
         if not days:
-            return False
-        existing = self.env['hr.leave.allocation'].sudo().search([
+            return empty, False
+        existing = empty.sudo().search([
             ('employee_id', '=', employee.id),
             ('holiday_status_id', '=', leave_type.id),
             ('state', '!=', 'refuse'),
@@ -472,8 +506,8 @@ class HrEmployee(models.Model):
             ('date_from', '<=', end),
         ], limit=1)
         if existing:
-            return existing
-        allocation = self.env['hr.leave.allocation'].sudo().create({
+            return existing, False
+        allocation = empty.sudo().create({
             'name': '%s %s' % (leave_type.name, start.year),
             'employee_id': employee.id,
             'holiday_status_id': leave_type.id,
@@ -483,7 +517,7 @@ class HrEmployee(models.Model):
             'allocation_type': 'regular',
         })
         allocation._action_validate()
-        return allocation
+        return allocation, True
 
     def _tarco_post_statutory_month(self, month_start):
         """Post this month's tax and insurance once. Returns the employees that were posted."""

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from . import tarco_common
 from . import hr_salary_rule
+from . import hr_payslip
 from . import hr_employee
 from . import hr_document
 from . import hr_onboarding

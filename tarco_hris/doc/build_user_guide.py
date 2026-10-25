@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.17'
+VERSION = 'Module version 19.0.1.0.20'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -591,8 +591,8 @@ def build_story():
         ['Payroll extras (bar)', 'Overtime, penalties, rewards and encashment amounts this month.'],
         ['Headcount by department (bar)', 'Active employees per department. HR only.'],
     ], [5.4, 11.0]))
-    s.append(p('Daily attendance also has Graph and Pivot views: open %s and switch the view icons.'
-               % menu('Tarco HRIS > Attendance > Daily attendance')))
+    s.append(p('Scroll the Charts page to see every graph. Daily attendance also has Graph and Pivot views: open %s '
+               'and switch the view icons.' % menu('Tarco HRIS > Attendance > Daily attendance')))
     s.append(tip('An employee must be linked on the user form (%s). The dashboard uses that link to hide other records.'
                  % menu('Settings > Users & Companies > Users')))
     s.append(PageBreak())
@@ -613,8 +613,8 @@ def build_story():
         'Make sure each payroll structure has the Tarco rules. They are added automatically at install and '
         'every day. To add them immediately, an HR Administrator runs %s.'
         % menu('Tarco HRIS > Reports > Create payroll rules'),
-        'Complete every employee file (next chapter), then click <b>Apply leave scheme</b> on each employee to '
-        'give the year\'s leave balance.',
+        'Complete every employee file (next chapter), then select the employees and click <b>Apply leave scheme</b> '
+        'on the list (or Actions) to give the year\'s leave balance.',
     ]))
     s.append(note('Employees must have a Badge ID that matches their Employee ID in BioTime. When an employee '
                   'gets a code and the Badge ID is empty, the code is copied into it for you. A Badge ID that is '
@@ -696,7 +696,8 @@ def build_story():
     s.append(section('3.5 Buttons on the employee'))
     s.append(table(['Button', 'What it does'], [
         ['Apply leave scheme', 'Creates this year\'s approved casual and annual allocations from the scheme. '
-                               'It does nothing for a type that already has an allocation this year.'],
+                               'Select many employees on the list and use the header button or Actions. '
+                               'A type that already has an allocation this year is left as it is. Resigned staff are skipped.'],
         ['Post tax and insurance', 'Creates one-time deductions for this month: gross x tax % and gross x social '
                                    'insurance %. Shown only when Adjust taxes automatically is off. Posting twice in '
                                    'the same month is refused (see 4.4).'],
@@ -890,8 +891,11 @@ def build_story():
     ], [4.0, 12.4]))
     s.append(section('6.2 Annual balance'))
     s.append(p('The scheme on the employee sets the balance: <b>21 days</b> = 6 casual + 15 annual, or <b>30 days</b> '
-               '= 6 casual + 24 annual. You can change the casual and annual days by hand. Click <b>Apply leave '
-               'scheme</b> at the start of each year to create the approved allocations.'))
+               '= 6 casual + 24 annual. You can change the casual and annual days by hand. At the start of each year, '
+               'open the employee list, select everyone who needs a balance, and click <b>Apply leave scheme</b> in '
+               'the list header or under Actions. The form button still applies one employee. A type that already has '
+               'an allocation this year is left as it is. Resigned staff are skipped. A notification shows how many '
+               'received allocations, already had this year, or were skipped.'))
     s.append(section('6.3 Request and approve leave'))
     s.append(steps([
         'The department manager or section supervisor opens %s (or the Time Off app) and creates the request for '
@@ -1199,6 +1203,18 @@ def build_story():
     ], [6.4, 3.6, 6.4]))
     s.append(p('Each adjustment carries a description such as "Penalty Lateness" or "Overtime OT/2026/0003", so the '
                'payslip lines are easy to read.'))
+    s.append(section('14.1 After the payslip is done'))
+    s.append(p('When HR confirms the payslip (Done / Validated), Tarco HRIS records that month against the linked '
+               'salary adjustments. You do not have to mark the slip as Paid for this to happen.'))
+    s.append(table(['Adjustment', 'What happens when the payslip is done'], [
+        ['One-time (overtime, reward, penalty, tax, insurance, encashment, leave deduction, one-month advance)',
+         'Status becomes Closed. Paid amount equals the month amount. It will not appear on the next payslip.'],
+        ['Running loan or multi-month advance',
+         'Stays Running. Only this month\'s instalment is marked paid. Remaining amount drops. It closes when the last instalment is on a done payslip.'],
+    ], [6.2, 10.2]))
+    s.append(tip('Open %s after you confirm October payroll: October overtime, tax and rewards should be Closed. '
+                 'A laptop loan still shows Running with a smaller remaining amount.'
+                 % menu('Payroll > Employees > Salary Adjustments')))
     s.append(note('If a new payroll structure is created, run %s (HR Administrator) so it gets the Tarco Earning '
                   'and Tarco Deduction rules. Otherwise the daily scheduled action adds them the next day.'
                   % menu('Reports > Create payroll rules')))
@@ -1207,7 +1223,7 @@ def build_story():
     # 15 Daily routine
     s.append(chapter('15. Daily and monthly routine'))
     s.append(table(['When', 'Who', 'Task'], [
-        ['Daily', 'HR and employees', 'Open the HRIS dashboard and work every tile that is not zero.'],
+        ['Daily', 'HR and employees', 'Open the HRIS dashboard tiles, then Dashboard charts, and work every tile that is not zero.'],
         ['Daily', 'HR', 'Check activities for probation and renewal alerts. Fix missing checkouts in Attendance.'],
         ['Daily', 'Managers', 'Request leave and missions for the team.'],
         ['Daily', 'HR', 'Approve leave and missions.'],
@@ -1219,7 +1235,7 @@ def build_story():
         ['Month end', 'HR', 'Confirm rewards, advances and encashments. On each employee, check Encashment this month '
                             'before running payroll.'],
         ['Month end', 'HR', 'Print the monthly reports.'],
-        ['Year start', 'HR', 'Enter official holidays and apply the leave scheme to all employees.'],
+        ['Year start', 'HR', 'Enter official holidays. Select the employees and click Apply leave scheme once for all of them.'],
         ['Each review period', 'Managers', 'Fill KPI reviews.'],
     ], [3.2, 2.6, 10.6]))
 
@@ -1262,7 +1278,12 @@ def build_story():
                                                              'the hire date again.'],
         ['No contract alert was received.', 'The alert is sent once per date. Make sure the employee and manager have '
                                             'work emails and that outgoing mail is configured.'],
-        ['Leave balance is empty.', 'Click Apply leave scheme on the employee.'],
+        ['Salary adjustments stay Running after the payslip is done.', 'Upgrade to 19.0.1.0.20. Confirming the slip '
+                                                                       'now closes one-time adjustments for that month. '
+                                                                       'A loan stays Running until the last instalment. '
+                                                                       'Already confirmed slips are closed on upgrade.'],
+        ['Leave balance is empty.', 'Select the employees and click Apply leave scheme on the list (or Actions). '
+                                    'The form button still works for one person.'],
         ['Demo data is still there after unticking.', 'Open %s, leave Activate demo data unticked and click Apply. '
                                                       'Only records created as demo are removed.'
          % menu('Tarco HRIS > Configuration > Demo data')],

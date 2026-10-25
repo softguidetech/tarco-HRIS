@@ -159,6 +159,13 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_tree"/>
         <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <header>
+                    <button name="action_tarco_apply_leave_scheme" type="object" string="Apply leave scheme"
+                            class="btn-secondary" groups="hr.group_hr_user"
+                            confirm="Create this year's casual and annual leave allocations for the selected employees?"/>
+                </header>
+            </xpath>
             <xpath expr="//field[@name='name']" position="before">
                 <field name="employee_code" optional="show"/>
             </xpath>
@@ -190,6 +197,11 @@
         <field name="model">hr.employee</field>
         <field name="arch" type="xml">
             <list>
+                <header>
+                    <button name="action_tarco_apply_leave_scheme" type="object" string="Apply leave scheme"
+                            class="btn-secondary" groups="hr.group_hr_user"
+                            confirm="Create this year's casual and annual leave allocations for the selected employees?"/>
+                </header>
                 <field name="employee_code"/>
                 <field name="name"/>
                 <field name="department_id"/>
@@ -209,6 +221,15 @@
         </field>
     </record>
 
+    <record id="action_server_tarco_apply_leave_scheme" model="ir.actions.server">
+        <field name="name">Apply leave scheme</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[Command.link(ref('hr.group_hr_user'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_tarco_apply_leave_scheme()</field>
+    </record>
     <record id="action_server_tarco_generate_code" model="ir.actions.server">
         <field name="name">Generate employee code</field>
         <field name="model_id" ref="hr.model_hr_employee"/>
