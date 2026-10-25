@@ -5,3 +5,85 @@
         color: #0F2C4C;
     }
 }
+
+.o_tarco_dash_charts {
+    background: #F3F7FA;
+    min-height: 100%;
+    padding: 20px 24px 32px;
+    overflow: auto;
+
+    .tdc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+    .tdc-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #0F2C4C;
+        margin: 0;
+    }
+    .tdc-sub {
+        margin: 4px 0 0;
+        color: #66788A;
+    }
+    .tdc-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .tdc-month {
+        color: #0F2C4C;
+        font-weight: 600;
+        margin-right: 6px;
+    }
+    .tdc-loading {
+        text-align: center;
+        padding: 80px 0;
+        color: #66788A;
+    }
+    .tdc-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .tdc-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px 18px 10px;
+        box-shadow: 0 1px 4px rgba(15, 44, 76, 0.06);
+        border-top: 3px solid #13A89E;
+    }
+    .tdc-card.tdc-wide {
+        grid-column: 1 / -1;
+    }
+    .tdc-card h2 {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0F2C4C;
+        margin: 0;
+    }
+    .tdc-hint {
+        font-size: 12px;
+        color: #66788A;
+        margin: 2px 0 10px;
+    }
+    .tdc-canvas-wrap {
+        position: relative;
+        height: 260px;
+    }
+    .tdc-canvas-round {
+        height: 280px;
+    }
+}
+
+@media (max-width: 992px) {
+    .o_tarco_dash_charts .tdc-grid {
+        grid-template-columns: 1fr;
+    }
+    .o_tarco_dash_charts .tdc-card.tdc-wide {
+        grid-column: auto;
+    }
+}

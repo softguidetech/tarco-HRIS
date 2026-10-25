@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.16'
+VERSION = 'Module version 19.0.1.0.17'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -529,7 +529,7 @@ def build_story():
     s.append(p('Open the %s application and choose the %s menu. Every screen in this guide lives under that menu.'
                % (menu('Employees'), menu('Tarco HRIS'))))
     s.append(table(['Menu', 'What it contains'], [
-        ['Dashboard', 'One screen of HRIS figures. HR sees the company. An employee sees only their own records.'],
+        ['Dashboard', 'Tiles of HRIS figures, plus a Charts view (donut, histogram, bar and line). HR sees the company. An employee sees only their own records.'],
         ['Employee file', 'Employees with the HR File page, and onboarding notices.'],
         ['Contracts', 'All contracts; probation ending and renewals due use the Payroll trial end and contract end dates.'],
         ['Attendance', 'Shifts and the daily attendance summary built from fingerprint punches.'],
@@ -580,6 +580,19 @@ def build_story():
     ], [5.4, 11.0]))
     s.append(p('Each tile opens the matching list, already filtered. The pages under the tiles show the latest late '
                'or absent days, leave, missions, penalties, rewards, advances and KPI reviews.'))
+    s.append(p('A second view, %s, draws the same scoped data as graphs. From the tile dashboard click '
+               '<b>Charts</b>, or open the menu directly. The charts are:'
+               % menu('Tarco HRIS > Dashboard charts')))
+    s.append(table(['Chart', 'What it shows'], [
+        ['Attendance mix (donut)', 'This month\'s daily lines split by status: present, late, absent, leave, mission, holiday, rest.'],
+        ['Leave types (donut)', 'Approved leave days this month, by leave type.'],
+        ['Daily attendance (histogram)', 'Present, late and absent counts for each day.'],
+        ['Lateness trend (line)', 'Late minutes added up by day.'],
+        ['Payroll extras (bar)', 'Overtime, penalties, rewards and encashment amounts this month.'],
+        ['Headcount by department (bar)', 'Active employees per department. HR only.'],
+    ], [5.4, 11.0]))
+    s.append(p('Daily attendance also has Graph and Pivot views: open %s and switch the view icons.'
+               % menu('Tarco HRIS > Attendance > Daily attendance')))
     s.append(tip('An employee must be linked on the user form (%s). The dashboard uses that link to hide other records.'
                  % menu('Settings > Users & Companies > Users')))
     s.append(PageBreak())

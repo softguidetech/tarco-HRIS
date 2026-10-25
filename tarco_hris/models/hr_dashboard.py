@@ -268,6 +268,102 @@ class TarcoHrDashboard(models.TransientModel):
     def action_refresh(self):
         return self.action_open()
 
+    def action_open_charts(self):
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'tarco_hris.dashboard_charts',
+            'name': _('HRIS Dashboard Charts'),
+            'target': 'current',
+        }
+
+    @api.model
+    def get_chart_data(self):
+        dash = self.create({})
+        month_start, month_end = dash._month_bounds()
+        company = self.env.company
+        emp_domain = dash._domain()
+        status_labels = dict(self.env['tarco.hr.attendance.day']._fields['status'].selection)
+
+        days = self.env['tarco.hr.attendance.day'].search(
+            emp_domain + [
+                ('work_date', '>=', month_start),
+                ('work_date', '<=', month_end),
+                ('company_id', '=', company.id),
+            ],
+            order='work_date',
+        )
+        status_count = {}
+        daily = {}
+        for day in days:
+            status_count[day.status] = status_count.get(day.status, 0) + 1
+            bucket = daily.setdefault(day.work_date, {'late': 0, 'absent': 0, 'present': 0, 'late_minutes': 0.0})
+            if day.late_minutes > 0 or day.status == 'late':
+                bucket['late'] += 1
+            if day.status == 'absent':
+                bucket['absent'] += 1
+            if day.status in ('present', 'late'):
+                bucket['present'] += 1
+            bucket['late_minutes'] += day.late_minutes or 0.0
+
+        dates = sorted(daily)
+        leaves = self.env['hr.leave'].search(emp_domain + [
+            ('state', '=', 'validate'),
+            ('request_date_from', '<=', month_end),
+            ('request_date_to', '>=', month_start),
+        ])
+        leave_types = {}
+        for leave in leaves:
+            name = leave.holiday_status_id.display_name
+            leave_types[name] = leave_types.get(name, 0.0) + (leave.number_of_days or 0.0)
+
+        departments = {'labels': [], 'values': []}
+        if dash.is_hr:
+            employees = self.env['hr.employee'].search([
+                ('company_id', '=', company.id),
+                ('active', '=', True),
+                ('tarco_resignation_date', '=', False),
+            ])
+            dept_count = {}
+            for employee in employees:
+                name = employee.department_id.display_name or _('No department')
+                dept_count[name] = dept_count.get(name, 0) + 1
+            items = sorted(dept_count.items(), key=lambda item: item[1], reverse=True)[:10]
+            departments = {'labels': [item[0] for item in items], 'values': [item[1] for item in items]}
+
+        return {
+            'scope_label': dash.scope_label,
+            'month_label': dash.month_label,
+            'is_hr': dash.is_hr,
+            'attendance_status': {
+                'labels': [status_labels.get(key, key) for key in status_count],
+                'values': list(status_count.values()),
+            },
+            'attendance_daily': {
+                'labels': [date.strftime('%d %b') for date in dates],
+                'late': [daily[date]['late'] for date in dates],
+                'absent': [daily[date]['absent'] for date in dates],
+                'present': [daily[date]['present'] for date in dates],
+            },
+            'late_minutes': {
+                'labels': [date.strftime('%d %b') for date in dates],
+                'values': [daily[date]['late_minutes'] for date in dates],
+            },
+            'leave_types': {
+                'labels': list(leave_types.keys()),
+                'values': list(leave_types.values()),
+            },
+            'payroll_mix': {
+                'labels': [_('Overtime'), _('Penalties'), _('Rewards'), _('Encashment')],
+                'values': [
+                    dash.overtime_amount,
+                    dash.penalty_amount,
+                    dash.reward_amount,
+                    dash.encashment_amount,
+                ],
+            },
+            'departments': departments,
+        }
+
     def _open(self, model, name, domain, view_mode='list,form', context=None):
         return {
             'type': 'ir.actions.act_window',

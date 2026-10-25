@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="tarco_hris.DashboardCharts" owl="1">
+        <div class="o_tarco_dash_charts o_action">
+            <div class="tdc-header">
+                <div>
+                    <h1 class="tdc-title"><i class="fa fa-bar-chart me-2"/>HRIS Dashboard Charts</h1>
+                    <p class="tdc-sub" t-esc="state.data and state.data.scope_label or ''"/>
+                </div>
+                <div class="tdc-actions">
+                    <span class="tdc-month" t-esc="state.data and state.data.month_label or ''"/>
+                    <button type="button" class="btn btn-secondary" t-on-click="openTiles">Tiles</button>
+                    <button type="button" class="btn btn-primary" t-on-click="reload">Refresh</button>
+                </div>
+            </div>
+            <t t-if="state.loading">
+                <div class="tdc-loading">
+                    <i class="fa fa-spinner fa-spin fa-2x"/>
+                    <p>Loading charts…</p>
+                </div>
+            </t>
+            <t t-elif="state.data">
+                <div class="tdc-grid">
+                    <div class="tdc-card">
+                        <h2>Attendance mix</h2>
+                        <p class="tdc-hint">Donut — days by status this month</p>
+                        <div class="tdc-canvas-wrap tdc-canvas-round">
+                            <canvas t-ref="statusDonut"/>
+                        </div>
+                    </div>
+                    <div class="tdc-card">
+                        <h2>Leave types</h2>
+                        <p class="tdc-hint">Donut — approved leave days</p>
+                        <div class="tdc-canvas-wrap tdc-canvas-round">
+                            <canvas t-ref="leaveDonut"/>
+                        </div>
+                    </div>
+                    <div class="tdc-card tdc-wide">
+                        <h2>Daily attendance</h2>
+                        <p class="tdc-hint">Histogram — present, late and absent by day</p>
+                        <div class="tdc-canvas-wrap">
+                            <canvas t-ref="dailyBar"/>
+                        </div>
+                    </div>
+                    <div class="tdc-card tdc-wide">
+                        <h2>Lateness trend</h2>
+                        <p class="tdc-hint">Line — late minutes by day</p>
+                        <div class="tdc-canvas-wrap">
+                            <canvas t-ref="lateLine"/>
+                        </div>
+                    </div>
+                    <div class="tdc-card">
+                        <h2>Payroll extras</h2>
+                        <p class="tdc-hint">Bar — overtime, penalties, rewards, encashment</p>
+                        <div class="tdc-canvas-wrap">
+                            <canvas t-ref="payrollBar"/>
+                        </div>
+                    </div>
+                    <div class="tdc-card" t-if="state.data.is_hr">
+                        <h2>Headcount by department</h2>
+                        <p class="tdc-hint">Bar — active employees</p>
+                        <div class="tdc-canvas-wrap">
+                            <canvas t-ref="deptBar"/>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

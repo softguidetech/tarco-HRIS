@@ -87,6 +87,28 @@
             </list>
         </field>
     </record>
+    <record id="view_tarco_attendance_day_graph" model="ir.ui.view">
+        <field name="name">tarco.hr.attendance.day.graph</field>
+        <field name="model">tarco.hr.attendance.day</field>
+        <field name="arch" type="xml">
+            <graph type="bar" stacked="0">
+                <field name="work_date" interval="day"/>
+                <field name="status"/>
+                <field name="late_minutes" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <record id="view_tarco_attendance_day_pivot" model="ir.ui.view">
+        <field name="name">tarco.hr.attendance.day.pivot</field>
+        <field name="model">tarco.hr.attendance.day</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="work_date" interval="day" type="row"/>
+                <field name="status" type="col"/>
+                <field name="late_minutes" type="measure"/>
+            </pivot>
+        </field>
+    </record>
     <record id="view_tarco_attendance_day_search" model="ir.ui.view">
         <field name="name">tarco.hr.attendance.day.search</field>
         <field name="model">tarco.hr.attendance.day</field>
