@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from odoo import fields, models, _
 
-from odoo.addons.tarco_hris.models.tarco_common import markup_sections, money
+from odoo.addons.tarco_hris.models.tarco_common import fmt_time, markup_sections, money
 
 
 class TarcoHrPenaltyGenerateWizard(models.TransientModel):
@@ -118,6 +118,11 @@ class TarcoHrPeriodReportWizard(models.TransientModel):
     def _report_sections(self):
         method = getattr(self, '_section_%s' % self.report_type)
         return method()
+
+    def get_report_title(self):
+        self.ensure_one()
+        return dict(self._fields['report_type']._description_selection(self.env)).get(
+            self.report_type, self.report_type)
 
     def get_report_markup(self):
         return markup_sections(self._report_sections())
@@ -256,17 +261,21 @@ class TarcoHrPeriodReportWizard(models.TransientModel):
             ('work_date', '<=', self.date_to),
         ], order='department_id, work_date, employee_id')
         detail = []
+        Day = self.env['tarco.hr.attendance.day']
+        status_labels = dict(Day._fields['status']._description_selection(self.env))
         for day in days:
+            local_in = Day._as_local(day.employee_id, day.check_in)
+            local_out = Day._as_local(day.employee_id, day.check_out)
             detail.append([
-                str(day.work_date),
+                day.work_date,
                 day.employee_code or '',
                 day.employee_id.name or '',
                 day.department_id.name or '',
-                str(day.check_in or ''),
-                str(day.check_out or ''),
-                day.status,
-                money(day.late_minutes),
-                money(day.overtime_hours),
+                fmt_time(local_in),
+                fmt_time(local_out),
+                status_labels.get(day.status, day.status),
+                int(round(day.late_minutes or 0.0)),
+                money(day.overtime_hours) if day.overtime_hours else '—',
                 day.note or '',
             ])
         summary = {}
@@ -294,7 +303,7 @@ class TarcoHrPeriodReportWizard(models.TransientModel):
             percent = (len(present) / len(working) * 100.0) if working else 0.0
             percent_rows.append(self._employee_row_start(employee) + [len(working), len(present), money(percent)])
         return [
-            (_('Daily movement'), ['Date', 'Code', 'Name', 'Department', 'Check in', 'Check out', 'Status', 'Late minutes', 'Overtime', 'Note'], detail),
+            (_('Daily movement'), ['Date', 'Code', 'Name', 'Department', 'In', 'Out', 'Status', 'Late', 'OT', 'Note'], detail),
             (_('Department strength'), ['Department', 'Headcount', 'Present', 'Leave', 'Absent', 'Mission'], summary_rows),
             (_('Attendance percentage'), ['Code', 'Name', 'Department', 'Section', 'Working days', 'Attended', 'Percent'], percent_rows),
         ]

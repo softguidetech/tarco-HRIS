@@ -23,20 +23,84 @@
     font-style: normal;
 }
 
-.o_tarco_hris_report,
-.o_tarco_hris_report h1,
-.o_tarco_hris_report h2,
+.o_tarco_hris_report {
+    font-family: 'DejaVu Sans', Arial, sans-serif;
+    font-size: 10px;
+    line-height: 1.35;
+    color: #1a1a1a;
+}
+
+.o_tarco_hris_report .ar,
+.o_tarco_hris_report [lang="ar"] {
+    font-family: 'IBM Plex Sans Arabic', 'DejaVu Sans', sans-serif;
+}
+
+.o_tarco_hris_report h2 {
+    font-size: 16px;
+    margin: 0 0 6px;
+}
+
 .o_tarco_hris_report h3,
-.o_tarco_hris_report h4,
-.o_tarco_hris_report h5,
-.o_tarco_hris_report p,
-.o_tarco_hris_report td,
+.o_tarco_hris_report .o_tarco_section {
+    font-size: 12px;
+    margin: 14px 0 6px;
+    page-break-after: avoid;
+}
+
+.o_tarco_hris_report table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    margin: 0 0 12px;
+}
+
 .o_tarco_hris_report th,
-.o_tarco_hris_report span,
-.o_tarco_hris_report div,
-.o_tarco_hris_report strong,
-.o_tarco_hris_report b,
-.o_tarco_hris_report small,
-.o_tarco_hris_report li {
-    font-family: 'IBM Plex Sans Arabic', 'DejaVu Sans', sans-serif !important;
+.o_tarco_hris_report td {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: anywhere !important;
+    vertical-align: top;
+    padding: 4px 5px !important;
+    border: 1px solid #c5cdd6 !important;
+}
+
+.o_tarco_report_table thead {
+    display: table-header-group;
+}
+
+.o_tarco_report_table th {
+    background: #0f2c4c !important;
+    color: #fff !important;
+    font-size: 8.5px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.o_tarco_report_table td {
+    font-size: 8.5px;
+}
+
+.o_tarco_report_table .num {
+    text-align: right;
+    white-space: nowrap !important;
+}
+
+.o_tarco_report_table tbody tr:nth-child(even) td {
+    background: #f4f7fa;
+}
+
+.o_tarco_kv th {
+    width: 18%;
+    background: #f0f3f7 !important;
+    font-weight: 600;
+}
+
+.o_tarco_kv td {
+    width: 32%;
+}
+
+.o_tarco_meta {
+    margin: 0 0 10px;
+    color: #445;
 }

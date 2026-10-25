@@ -323,6 +323,8 @@ class TarcoHrDemoWizard(models.TransientModel):
             'line_ids': [(0, 0, {'employee_id': ahmed.id}), (0, 0, {'employee_id': omar.id})],
         })
         self._safe(mission.action_approve)
+        if mission.line_ids.calendar_event_id:
+            mission.line_ids.calendar_event_id.tarco_is_demo = True
 
         overtime = self._make('tarco.hr.overtime', {
             'date_from': today - timedelta(days=14),

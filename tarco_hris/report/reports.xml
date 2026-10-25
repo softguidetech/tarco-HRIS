@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="paperformat_tarco_hris" model="report.paperformat">
+        <field name="name">Tarco HRIS A4</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">40</field>
+        <field name="margin_bottom">16</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">32</field>
+        <field name="dpi">90</field>
+    </record>
+    <record id="paperformat_tarco_hris_landscape" model="report.paperformat">
+        <field name="name">Tarco HRIS A4 Landscape</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">36</field>
+        <field name="margin_bottom">12</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">28</field>
+        <field name="dpi">90</field>
+    </record>
+
     <record id="action_report_employee_file" model="ir.actions.report">
         <field name="name">Employee File</field>
         <field name="model">tarco.hr.employee.report.wizard</field>
@@ -7,6 +34,7 @@
         <field name="report_name">tarco_hris.report_employee_file</field>
         <field name="report_file">tarco_hris.report_employee_file</field>
         <field name="print_report_name">'Employee File - %s' % (object.employee_id.name)</field>
+        <field name="paperformat_id" ref="paperformat_tarco_hris"/>
     </record>
     <record id="action_report_period" model="ir.actions.report">
         <field name="name">Tarco HR Report</field>
@@ -14,9 +42,9 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">tarco_hris.report_tarco_period</field>
         <field name="report_file">tarco_hris.report_tarco_period</field>
-        <field name="print_report_name">'Tarco HR - %s' % (object.report_type)</field>
+        <field name="print_report_name">'Tarco HR - %s' % (object.get_report_title())</field>
+        <field name="paperformat_id" ref="paperformat_tarco_hris_landscape"/>
     </record>
-
     <record id="action_report_mission" model="ir.actions.report">
         <field name="name">Mission Order</field>
         <field name="model">tarco.hr.mission</field>
@@ -26,6 +54,7 @@
         <field name="print_report_name">'Mission - %s' % (object.name)</field>
         <field name="binding_model_id" ref="model_tarco_hr_mission"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_tarco_hris"/>
     </record>
 
     <template id="report_font_style">
@@ -35,9 +64,35 @@
             @font-face { font-family: 'IBM Plex Sans Arabic'; src: url('<t t-out="font_base"/>IBMPlexSansArabic-Medium.ttf') format('truetype'); font-weight: 500; }
             @font-face { font-family: 'IBM Plex Sans Arabic'; src: url('<t t-out="font_base"/>IBMPlexSansArabic-SemiBold.ttf') format('truetype'); font-weight: 600; }
             @font-face { font-family: 'IBM Plex Sans Arabic'; src: url('<t t-out="font_base"/>IBMPlexSansArabic-Bold.ttf') format('truetype'); font-weight: 700; }
-            .o_tarco_hris_report, .o_tarco_hris_report * {
-                font-family: 'IBM Plex Sans Arabic', 'DejaVu Sans', sans-serif !important;
+            .o_tarco_hris_report { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 10px; line-height: 1.35; color: #1a1a1a; }
+            .o_tarco_hris_report .ar, .o_tarco_hris_report [lang="ar"] {
+                font-family: 'IBM Plex Sans Arabic', 'DejaVu Sans', sans-serif;
             }
+            .o_tarco_hris_report h2 { font-size: 16px; margin: 0 0 6px; }
+            .o_tarco_hris_report h3, .o_tarco_hris_report h4, .o_tarco_hris_report h5,
+            .o_tarco_hris_report .o_tarco_section { font-size: 12px; margin: 14px 0 6px; page-break-after: avoid; }
+            .o_tarco_hris_report table {
+                width: 100% !important; max-width: 100% !important;
+                table-layout: fixed !important; border-collapse: collapse !important;
+                margin: 0 0 12px;
+            }
+            .o_tarco_hris_report th, .o_tarco_hris_report td {
+                white-space: normal !important; word-wrap: break-word !important;
+                overflow-wrap: anywhere !important; vertical-align: top;
+                padding: 4px 5px !important; border: 1px solid #c5cdd6 !important;
+            }
+            .o_tarco_report_table thead { display: table-header-group; }
+            .o_tarco_report_table th {
+                background: #0f2c4c !important; color: #fff !important;
+                font-size: 8.5px; font-weight: 600; text-align: left;
+            }
+            .o_tarco_report_table td { font-size: 8.5px; }
+            .o_tarco_report_table .num { text-align: right; white-space: nowrap !important; }
+            .o_tarco_report_table tbody tr:nth-child(even) td { background: #f4f7fa; }
+            .o_tarco_kv th { width: 18%; background: #f0f3f7 !important; font-weight: 600; }
+            .o_tarco_kv td { width: 32%; }
+            .o_tarco_meta { margin: 0 0 10px; color: #445; }
+            .o_tarco_empty { color: #666; font-style: italic; }
         </style>
     </template>
 
@@ -46,75 +101,81 @@
             <t t-call="tarco_hris.report_font_style"/>
             <t t-set="cur" t-value="o.currency_id"/>
             <div class="page o_tarco_hris_report" dir="auto">
-                <div class="d-flex justify-content-between align-items-end mb-3">
-                    <div>
-                        <h2 class="mb-0">Mission Order / أمر مأمورية</h2>
-                        <div class="text-muted">Reference <strong t-out="o.name"/></div>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge text-bg-secondary fs-6" t-field="o.state"/>
-                    </div>
-                </div>
+                <h2>Mission Order / <span lang="ar">أمر مأمورية</span></h2>
+                <p class="o_tarco_meta">
+                    Reference <strong t-out="o.name"/>
+                    — <span t-field="o.state"/>
+                </p>
 
-                <table class="table table-sm table-bordered mb-3">
+                <table class="o_tarco_kv">
+                    <colgroup>
+                        <col style="width:18%"/><col style="width:32%"/>
+                        <col style="width:18%"/><col style="width:32%"/>
+                    </colgroup>
                     <tr>
-                        <th class="w-25 table-light">Place / المكان</th><td t-out="o.place"/>
-                        <th class="w-25 table-light">Currency / العملة</th><td><t t-out="cur.name"/> (<t t-out="cur.symbol"/>)</td>
+                        <th>Place / <span lang="ar">المكان</span></th><td t-out="o.place"/>
+                        <th>Currency / <span lang="ar">العملة</span></th><td><t t-out="cur.name"/> (<t t-out="cur.symbol"/>)</td>
                     </tr>
                     <tr>
-                        <th class="table-light">From / من</th><td><span t-field="o.date_start"/> <span t-field="o.hour_start" t-options="{'widget': 'float_time'}"/></td>
-                        <th class="table-light">To / إلى</th><td><span t-field="o.date_end"/> <span t-field="o.hour_end" t-options="{'widget': 'float_time'}"/></td>
+                        <th>From / <span lang="ar">من</span></th>
+                        <td><span t-field="o.date_start"/> <span t-field="o.hour_start" t-options="{'widget': 'float_time'}"/></td>
+                        <th>To / <span lang="ar">إلى</span></th>
+                        <td><span t-field="o.date_end"/> <span t-field="o.hour_end" t-options="{'widget': 'float_time'}"/></td>
                     </tr>
                     <tr>
-                        <th class="table-light">Days / الأيام</th><td t-out="o.number_of_days"/>
-                        <th class="table-light">Employees / الموظفون</th><td t-out="o.employee_count"/>
+                        <th>Days / <span lang="ar">الأيام</span></th><td t-out="o.number_of_days"/>
+                        <th>Employees / <span lang="ar">الموظفون</span></th><td t-out="o.employee_count"/>
                     </tr>
                     <tr>
-                        <th class="table-light">Cost per person per day</th>
+                        <th>Cost per person / day</th>
                         <td><span t-field="o.per_diem" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
-                        <th class="table-light">Total hours</th><td t-out="'%.2f' % o.total_hours"/>
+                        <th>Total hours</th><td t-out="'%.2f' % o.total_hours"/>
                     </tr>
                 </table>
 
-                <h5>Purpose / الغرض</h5>
+                <h5>Purpose / <span lang="ar">الغرض</span></h5>
                 <p t-field="o.purpose" class="mb-3"/>
 
-                <h5>Employees / الموظفون</h5>
-                <table class="table table-sm table-bordered">
-                    <thead class="table-light">
+                <h5>Employees / <span lang="ar">الموظفون</span></h5>
+                <table class="o_tarco_report_table">
+                    <colgroup>
+                        <col style="width:6%"/><col style="width:12%"/><col style="width:22%"/>
+                        <col style="width:18%"/><col style="width:16%"/><col style="width:8%"/><col style="width:18%"/>
+                    </colgroup>
+                    <thead>
                         <tr>
                             <th>#</th><th>Code</th><th>Name</th><th>Department</th><th>Job</th>
-                            <th class="text-end">Days</th><th class="text-end">Amount (<t t-out="cur.name"/>)</th>
+                            <th class="num">Days</th><th class="num">Amount (<t t-out="cur.name"/>)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr t-foreach="o.line_ids" t-as="line">
                             <td t-out="line_index + 1"/>
-                            <td t-out="line.employee_code or ''"/>
+                            <td t-out="line.employee_code or '—'"/>
                             <td t-out="line.employee_id.name"/>
-                            <td t-out="line.department_id.name or ''"/>
-                            <td t-out="line.job_id.name or ''"/>
-                            <td class="text-end" t-out="o.number_of_days"/>
-                            <td class="text-end"><span t-field="line.amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                            <td t-out="line.department_id.name or '—'"/>
+                            <td t-out="line.job_id.name or '—'"/>
+                            <td class="num" t-out="o.number_of_days"/>
+                            <td class="num"><span t-field="line.amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
                         </tr>
                     </tbody>
                     <tfoot>
-                        <tr class="fw-bold">
-                            <td colspan="6" class="text-end">Total / الإجمالي</td>
-                            <td class="text-end"><span t-field="o.cost" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        <tr>
+                            <td colspan="6" style="text-align:right;font-weight:700;">Total / <span lang="ar">الإجمالي</span></td>
+                            <td class="num"><span t-field="o.cost" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
                         </tr>
-                        <tr t-if="cur != o.company_currency_id" class="text-muted">
-                            <td colspan="6" class="text-end">Equivalent in <t t-out="o.company_currency_id.name"/> at the rate of <span t-field="o.date_start"/></td>
-                            <td class="text-end"><span t-field="o.cost_company_currency" t-options="{'widget': 'monetary', 'display_currency': o.company_currency_id}"/></td>
+                        <tr t-if="cur != o.company_currency_id">
+                            <td colspan="6" style="text-align:right;">Equivalent in <t t-out="o.company_currency_id.name"/> at the rate of <span t-field="o.date_start"/></td>
+                            <td class="num"><span t-field="o.cost_company_currency" t-options="{'widget': 'monetary', 'display_currency': o.company_currency_id}"/></td>
                         </tr>
                     </tfoot>
                 </table>
 
-                <table class="table table-borderless mt-5 text-center">
+                <table class="o_tarco_kv" style="margin-top:28px;text-align:center;">
                     <tr>
-                        <td class="w-33">Requested by / مقدم الطلب<br/><br/>____________________</td>
-                        <td class="w-33">Human Resources / الموارد البشرية<br/><br/>____________________</td>
-                        <td class="w-33">Approved by / الاعتماد<br/><br/>____________________</td>
+                        <td>Requested by / <span lang="ar">مقدم الطلب</span><br/><br/>____________________</td>
+                        <td>Human Resources / <span lang="ar">الموارد البشرية</span><br/><br/>____________________</td>
+                        <td>Approved by / <span lang="ar">الاعتماد</span><br/><br/>____________________</td>
                     </tr>
                 </table>
             </div>
@@ -136,56 +197,117 @@
                 <t t-call="web.external_layout">
                     <t t-call="tarco_hris.report_font_style"/>
                     <div class="page o_tarco_hris_report" dir="auto">
-                        <h2>Employee file / ملف الموظف</h2>
-                        <h3><t t-out="emp.employee_code or ''"/> <t t-out="emp.name"/></h3>
-                        <table class="table table-sm" t-if="o.show_personal">
-                            <tr><td>Birthday</td><td><t t-out="emp.birthday or ''"/></td></tr>
-                            <tr><td>Phone</td><td><t t-out="emp.private_phone or ''"/> / <t t-out="emp.emergency_phone or ''"/></td></tr>
-                            <tr><td>Email</td><td><t t-out="emp.private_email or emp.work_email or ''"/></td></tr>
-                            <tr><td>Address</td><td><t t-out="emp.tarco_state_id.name or ''"/> / <t t-out="emp.tarco_city or ''"/> / <t t-out="emp.tarco_district or ''"/> / <t t-out="emp.tarco_square or ''"/></td></tr>
-                            <tr><td>Qualification</td><td><t t-out="emp.certificate or ''"/></td></tr>
-                            <tr><td>Marital status</td><td><t t-out="emp.marital or ''"/></td></tr>
-                            <tr><td>Experience</td><td><t t-out="emp.tarco_experience_years"/></td></tr>
-                            <tr><td>Religion</td><td><t t-out="emp.tarco_religion or ''"/></td></tr>
-                            <tr><td>Nationality</td><td><t t-out="emp.country_id.name or ''"/></td></tr>
-                            <tr><td>Gender</td><td><t t-out="emp.sex or ''"/></td></tr>
+                        <h2>Employee file / <span lang="ar">ملف الموظف</span></h2>
+                        <p class="o_tarco_meta"><strong t-out="emp.employee_code or ''"/> — <t t-out="emp.name"/></p>
+                        <table class="o_tarco_kv" t-if="o.show_personal">
+                            <colgroup>
+                                <col style="width:18%"/><col style="width:32%"/>
+                                <col style="width:18%"/><col style="width:32%"/>
+                            </colgroup>
+                            <tr>
+                                <th>Birthday</th><td t-out="emp.birthday or '—'"/>
+                                <th>Phone</th><td><t t-out="emp.private_phone or '—'"/> / <t t-out="emp.emergency_phone or '—'"/></td>
+                            </tr>
+                            <tr>
+                                <th>Email</th><td t-out="emp.private_email or emp.work_email or '—'"/>
+                                <th>Address</th>
+                                <td>
+                                    <t t-out="emp.tarco_state_id.name or ''"/>
+                                    <t t-if="emp.tarco_city"> / <t t-out="emp.tarco_city"/></t>
+                                    <t t-if="emp.tarco_district"> / <t t-out="emp.tarco_district"/></t>
+                                    <t t-if="emp.tarco_square"> / <t t-out="emp.tarco_square"/></t>
+                                    <t t-if="not (emp.tarco_state_id or emp.tarco_city)">—</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Qualification</th><td t-out="emp.certificate or '—'"/>
+                                <th>Marital status</th><td t-out="emp.marital or '—'"/>
+                            </tr>
+                            <tr>
+                                <th>Experience</th><td t-out="emp.tarco_experience_years"/>
+                                <th>Religion</th><td t-out="emp.tarco_religion or '—'"/>
+                            </tr>
+                            <tr>
+                                <th>Nationality</th><td t-out="emp.country_id.name or '—'"/>
+                                <th>Gender</th><td t-out="emp.sex or '—'"/>
+                            </tr>
                         </table>
-                        <table class="table table-sm" t-if="o.show_job">
-                            <tr><td>Department</td><td><t t-out="emp.department_id.name or ''"/></td></tr>
-                            <tr><td>Section</td><td><t t-out="emp.section_id.name or ''"/></td></tr>
-                            <tr><td>Job</td><td><t t-out="emp.job_id.name or ''"/></td></tr>
+                        <table class="o_tarco_kv" t-if="o.show_job">
+                            <colgroup>
+                                <col style="width:18%"/><col style="width:32%"/>
+                                <col style="width:18%"/><col style="width:32%"/>
+                            </colgroup>
+                            <tr>
+                                <th>Department</th><td t-out="emp.department_id.name or '—'"/>
+                                <th>Section</th><td t-out="emp.section_id.name or '—'"/>
+                            </tr>
+                            <tr>
+                                <th>Job</th><td colspan="3" t-out="emp.job_id.name or '—'"/>
+                            </tr>
                         </table>
-                        <table class="table table-sm" t-if="o.show_contract">
-                            <tr><td>Hire date</td><td><t t-out="emp.tarco_hire_date or ''"/></td></tr>
-                            <tr><td>Probation end</td><td><t t-out="emp.tarco_trial_date_end or ''"/></td></tr>
-                            <tr><td>Contract end</td><td><t t-out="emp.tarco_contract_date_end or ''"/></td></tr>
-                            <tr><td>Renewal</td><td><t t-out="emp.tarco_renewal_date or ''"/></td></tr>
-                            <tr><td>Resignation</td><td><t t-out="emp.tarco_resignation_date or ''"/></td></tr>
-                            <tr><td>Rehire</td><td><t t-out="emp.tarco_rehire_date or ''"/></td></tr>
-                            <tr><td>Service</td><td><t t-out="emp.tarco_service_display or ''"/></td></tr>
+                        <table class="o_tarco_kv" t-if="o.show_contract">
+                            <colgroup>
+                                <col style="width:18%"/><col style="width:32%"/>
+                                <col style="width:18%"/><col style="width:32%"/>
+                            </colgroup>
+                            <tr>
+                                <th>Hire date</th><td t-out="emp.tarco_hire_date or '—'"/>
+                                <th>Probation end</th><td t-out="emp.tarco_trial_date_end or '—'"/>
+                            </tr>
+                            <tr>
+                                <th>Contract end</th><td t-out="emp.tarco_contract_date_end or '—'"/>
+                                <th>Renewal</th><td t-out="emp.tarco_renewal_date or '—'"/>
+                            </tr>
+                            <tr>
+                                <th>Resignation</th><td t-out="emp.tarco_resignation_date or '—'"/>
+                                <th>Rehire</th><td t-out="emp.tarco_rehire_date or '—'"/>
+                            </tr>
+                            <tr>
+                                <th>Service</th><td colspan="3" t-out="emp.tarco_service_display or '—'"/>
+                            </tr>
                         </table>
-                        <table class="table table-sm" t-if="o.show_salary">
-                            <tr><td>Basic</td><td><t t-out="'%.2f' % (emp.tarco_basic_wage or 0.0)"/></td></tr>
-                            <tr><td>Cost of living</td><td><t t-out="'%.2f' % (emp.tarco_cola or 0.0)"/></td></tr>
-                            <tr><td>Transport</td><td><t t-out="'%.2f' % (emp.tarco_transport_allowance or 0.0)"/></td></tr>
-                            <tr><td>Housing</td><td><t t-out="'%.2f' % (emp.tarco_housing_allowance or 0.0)"/></td></tr>
-                            <tr><td>Other</td><td><t t-out="'%.2f' % (emp.tarco_other_allowance or 0.0)"/></td></tr>
-                            <tr><td>Gross</td><td><t t-out="'%.2f' % (emp.tarco_gross_wage or 0.0)"/></td></tr>
+                        <table class="o_tarco_kv" t-if="o.show_salary">
+                            <colgroup>
+                                <col style="width:18%"/><col style="width:32%"/>
+                                <col style="width:18%"/><col style="width:32%"/>
+                            </colgroup>
+                            <tr>
+                                <th>Basic</th><td class="num" t-out="'%.2f' % (emp.tarco_basic_wage or 0.0)"/>
+                                <th>Cost of living</th><td class="num" t-out="'%.2f' % (emp.tarco_cola or 0.0)"/>
+                            </tr>
+                            <tr>
+                                <th>Transport</th><td class="num" t-out="'%.2f' % (emp.tarco_transport_allowance or 0.0)"/>
+                                <th>Housing</th><td class="num" t-out="'%.2f' % (emp.tarco_housing_allowance or 0.0)"/>
+                            </tr>
+                            <tr>
+                                <th>Other</th><td class="num" t-out="'%.2f' % (emp.tarco_other_allowance or 0.0)"/>
+                                <th>Gross</th><td class="num" t-out="'%.2f' % (emp.tarco_gross_wage or 0.0)"/>
+                            </tr>
                         </table>
                         <t t-if="o.show_documents">
                             <h4>Documents</h4>
-                            <table class="table table-sm table-bordered">
-                                <tr><th>Group</th><th>Kind</th><th>Received</th><th>Date</th></tr>
-                                <tr t-foreach="emp.tarco_document_ids" t-as="doc">
-                                    <td t-out="doc.group_type"/>
-                                    <td t-out="doc.kind"/>
-                                    <td t-out="doc.received"/>
-                                    <td t-out="doc.document_date or ''"/>
-                                </tr>
+                            <table class="o_tarco_report_table">
+                                <colgroup>
+                                    <col style="width:25%"/><col style="width:35%"/><col style="width:20%"/><col style="width:20%"/>
+                                </colgroup>
+                                <thead>
+                                    <tr><th>Group</th><th>Kind</th><th>Received</th><th>Date</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="emp.tarco_document_ids" t-as="doc">
+                                        <td t-out="doc.group_type"/>
+                                        <td t-out="doc.kind"/>
+                                        <td t-out="doc.received"/>
+                                        <td t-out="doc.document_date or '—'"/>
+                                    </tr>
+                                    <tr t-if="not emp.tarco_document_ids">
+                                        <td colspan="4">No documents.</td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </t>
                         <p t-if="o.show_leave">Leave scheme <t t-out="emp.tarco_leave_scheme"/>: casual <t t-out="emp.tarco_casual_days"/>, annual <t t-out="emp.tarco_regular_days"/>. Encashment this month: <t t-out="'%.2f' % (emp.tarco_encashment_month_amount or 0.0)"/> (<t t-out="emp.tarco_encashment_month_days"/> days).</p>
-                        <p t-if="o.show_attendance">Shift <t t-out="emp.tarco_shift_id.name or ''"/>. Overtime mode <t t-out="emp.tarco_overtime_mode"/>.</p>
+                        <p t-if="o.show_attendance">Shift <t t-out="emp.tarco_shift_id.name or '—'"/>. Overtime mode <t t-out="emp.tarco_overtime_mode"/>.</p>
                         <p t-if="o.show_penalty">Penalties: <t t-out="emp.tarco_penalty_count"/></p>
                         <p t-if="o.show_reward">Rewards: <t t-out="emp.tarco_reward_count"/></p>
                         <p t-if="o.show_advance">Advances: <t t-out="emp.tarco_advance_count"/></p>
@@ -202,10 +324,11 @@
                 <t t-call="web.external_layout">
                     <t t-call="tarco_hris.report_font_style"/>
                     <div class="page o_tarco_hris_report" dir="auto">
-                        <h2>Tarco HRIS</h2>
-                        <p>
-                            <t t-out="o.report_type"/>
-                            — <t t-out="o.date_from"/> to <t t-out="o.date_to"/>
+                        <h2 t-out="o.get_report_title()"/>
+                        <p class="o_tarco_meta">
+                            <span t-field="o.date_from"/> — <span t-field="o.date_to"/>
+                            <t t-if="o.department_id"> · <t t-out="o.department_id.name"/></t>
+                            <t t-if="o.employee_id"> · <t t-out="o.employee_id.name"/></t>
                         </p>
                         <div t-out="o.get_report_markup()"/>
                     </div>

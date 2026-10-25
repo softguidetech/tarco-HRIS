@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import re
+from datetime import date, datetime
+
 from markupsafe import Markup, escape
 
 from odoo import _, fields
@@ -66,24 +69,124 @@ def tarco_post_adjustment(env, employee, earning, amount, description, date_star
     return env['hr.salary.attachment'].sudo().create(vals)
 
 
+_COL_WIDTH = {
+    'date': 9, 'from': 9, 'to': 9, 'due': 8, 'observed': 9,
+    'original date': 9, 'moved to': 8, 'hire date': 9, 'rehire date': 9,
+    'contract end': 9, 'probation end': 9, 'resignation': 9,
+    'code': 9, 'number': 8, 'rank': 7,
+    'name': 14, 'department': 12, 'section': 10, 'job': 10,
+    'check in': 7, 'check out': 7, 'in': 6, 'out': 6,
+    'status': 8, 'type': 10, 'currency': 7,
+    'late minutes': 7, 'late': 6, 'overtime': 7, 'ot': 6,
+    'days': 6, 'hours': 6, 'years': 6, 'months': 6,
+    'amount': 8, 'cost': 8, 'total': 8, 'paid': 8, 'remaining': 8,
+    'percent': 7, 'score': 7, 'repeat': 6, 'count': 6,
+    'headcount': 8, 'present': 7, 'leave': 7, 'absent': 7, 'mission': 8,
+    'working days': 8, 'attended': 8, 'hires': 7, 'resignations': 9,
+    'active headcount': 9, 'turnover %': 8, 'monthly gross': 9,
+    'note': 14, 'reason': 14, 'comment': 14, 'employees': 16,
+    'place': 11, 'advance': 9, 'rule': 12, 'question': 14,
+    'hours %': 7, 'quality %': 8, 'overall %': 8, 'average %': 8,
+    'hours x 1.5': 8, 'hours x 2': 8, 'deduction': 9, 'service': 10,
+}
+
+_NUM_HEADERS = {
+    'days', 'hours', 'years', 'months', 'amount', 'cost', 'total', 'paid',
+    'remaining', 'percent', 'score', 'repeat', 'count', 'late minutes', 'late',
+    'overtime', 'ot', 'headcount', 'present', 'leave', 'absent', 'mission',
+    'working days', 'attended', 'hires', 'resignations', 'active headcount',
+    'turnover %', 'monthly gross', 'hours %', 'quality %', 'overall %',
+    'average %', 'hours x 1.5', 'hours x 2',
+}
+
+
+def fmt_date(value):
+    if value in (None, False, ''):
+        return '—'
+    if isinstance(value, datetime):
+        return value.strftime('%d %b %Y')
+    if isinstance(value, date):
+        return value.strftime('%d %b %Y')
+    text = str(value).strip()
+    match = re.match(r'^(\d{4}-\d{2}-\d{2})', text)
+    if match:
+        try:
+            return fields.Date.from_string(match.group(1)).strftime('%d %b %Y')
+        except Exception:
+            return text
+    return text
+
+
+def fmt_time(value):
+    if not value:
+        return '—'
+    if hasattr(value, 'strftime'):
+        return value.strftime('%H:%M')
+    text = str(value)
+    match = re.search(r'(\d{2}:\d{2})', text)
+    return match.group(1) if match else text
+
+
+def _cell_text(value):
+    if value in (None, False, ''):
+        return '—'
+    if isinstance(value, datetime):
+        return value.strftime('%d %b %Y %H:%M')
+    if isinstance(value, date):
+        return value.strftime('%d %b %Y')
+    text = str(value).strip()
+    if re.fullmatch(r'\d{4}-\d{2}-\d{2}', text):
+        return fmt_date(text)
+    if re.match(r'^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}', text):
+        return '%s %s' % (fmt_date(text), fmt_time(text))
+    return text
+
+
+def _header_key(header):
+    text = str(header or '')
+    return text.split('(')[0].strip().lower()
+
+
+def _col_widths(headers):
+    raw = []
+    for header in headers:
+        key = _header_key(header)
+        raw.append(_COL_WIDTH.get(key, 10))
+    total = sum(raw) or 1
+    return [max(5, round(width * 100.0 / total, 1)) for width in raw]
+
+
 def html_table(headers, rows):
-    head = ''.join('<th>%s</th>' % escape(header) for header in headers)
+    widths = _col_widths(headers)
+    colgroup = ''.join('<col style="width:%s%%"/>' % width for width in widths)
+    head_cells = []
+    num_flags = []
+    for header in headers:
+        numeric = _header_key(header) in _NUM_HEADERS
+        num_flags.append(numeric)
+        css = ' class="num"' if numeric else ''
+        head_cells.append('<th%s>%s</th>' % (css, escape(header)))
     body = []
     for row in rows:
-        cells = ''.join('<td>%s</td>' % escape('' if value is None else str(value)) for value in row)
-        body.append('<tr>%s</tr>' % cells)
+        cells = []
+        for index, value in enumerate(row):
+            numeric = index < len(num_flags) and num_flags[index]
+            css = ' class="num"' if numeric else ''
+            cells.append('<td%s>%s</td>' % (css, escape(_cell_text(value))))
+        body.append('<tr>%s</tr>' % ''.join(cells))
     return (
-        '<table class="table table-sm table-bordered">'
+        '<table class="o_tarco_report_table">'
+        '<colgroup>%s</colgroup>'
         '<thead><tr>%s</tr></thead><tbody>%s</tbody></table>'
-    ) % (head, ''.join(body))
+    ) % (colgroup, ''.join(head_cells), ''.join(body))
 
 
 def markup_sections(sections):
     parts = []
     for title, headers, rows in sections:
-        parts.append('<h3>%s</h3>' % escape(title))
+        parts.append('<h3 class="o_tarco_section">%s</h3>' % escape(title))
         if not rows:
-            parts.append('<p>%s</p>' % escape(_('No records.')))
+            parts.append('<p class="o_tarco_empty">%s</p>' % escape(_('No records.')))
         else:
             parts.append(html_table(headers, rows))
     return Markup(''.join(parts))

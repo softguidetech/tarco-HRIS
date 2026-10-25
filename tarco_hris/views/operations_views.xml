@@ -70,7 +70,11 @@
         <field name="name">tarco.hr.attendance.day.list</field>
         <field name="model">tarco.hr.attendance.day</field>
         <field name="arch" type="xml">
-            <list create="0">
+            <list create="0"
+                  decoration-info="status == 'mission'"
+                  decoration-success="status in ('present', 'holiday', 'rest')"
+                  decoration-warning="status == 'late'"
+                  decoration-danger="status in ('absent', 'incomplete')">
                 <field name="work_date"/>
                 <field name="employee_code"/>
                 <field name="employee_id"/>
@@ -85,6 +89,49 @@
                 <field name="overtime_amount"/>
                 <field name="note"/>
             </list>
+        </field>
+    </record>
+    <record id="view_tarco_attendance_day_form" model="ir.ui.view">
+        <field name="name">tarco.hr.attendance.day.form</field>
+        <field name="model">tarco.hr.attendance.day</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="employee_code"/>
+                            <field name="department_id"/>
+                            <field name="work_date"/>
+                            <field name="shift_id"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="check_in"/>
+                            <field name="check_out"/>
+                            <field name="late_minutes"/>
+                            <field name="regular_hours"/>
+                            <field name="overtime_hours"/>
+                            <field name="leave_id"/>
+                            <field name="mission_id"/>
+                            <field name="holiday_id"/>
+                            <field name="note"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_attendance_day_calendar" model="ir.ui.view">
+        <field name="name">tarco.hr.attendance.day.calendar</field>
+        <field name="model">tarco.hr.attendance.day</field>
+        <field name="arch" type="xml">
+            <calendar date_start="work_date" color="status" mode="month" event_open_popup="1">
+                <field name="employee_id"/>
+                <field name="status"/>
+                <field name="note"/>
+                <field name="mission_id"/>
+            </calendar>
         </field>
     </record>
     <record id="view_tarco_attendance_day_graph" model="ir.ui.view">
@@ -231,9 +278,15 @@
                     <button name="action_cancel" type="object" string="Cancel" invisible="state in ('cancel', 'done')"/>
                     <button name="action_draft" type="object" string="Reset" invisible="state != 'cancel'"/>
                     <button name="action_print" type="object" string="Print mission order" icon="fa-print"/>
+                    <button name="action_open_calendar" type="object" string="Open calendar" icon="fa-calendar"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,approved,done"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_calendar" type="object" class="oe_stat_button" icon="fa-calendar">
+                            <field name="calendar_event_count" widget="statinfo" string="Calendar"/>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="name"/>
@@ -264,6 +317,7 @@
                             <field name="job_id" optional="show"/>
                             <field name="currency_id" column_invisible="1"/>
                             <field name="amount" sum="Total"/>
+                            <field name="calendar_event_id" optional="show"/>
                         </list>
                     </field>
                 </sheet>
@@ -290,7 +344,39 @@
             </list>
         </field>
     </record>
-
+    <record id="view_tarco_mission_calendar" model="ir.ui.view">
+        <field name="name">tarco.hr.mission.calendar</field>
+        <field name="model">tarco.hr.mission</field>
+        <field name="arch" type="xml">
+            <calendar date_start="date_start" date_stop="date_end" color="state" mode="month" event_open_popup="1">
+                <field name="name"/>
+                <field name="place"/>
+                <field name="state"/>
+                <field name="employee_ids" widget="many2many_tags"/>
+            </calendar>
+        </field>
+    </record>
+    <record id="view_tarco_mission_search" model="ir.ui.view">
+        <field name="name">tarco.hr.mission.search</field>
+        <field name="model">tarco.hr.mission</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="place"/>
+                <field name="employee_ids"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Approved" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter string="My missions" name="my_missions"
+                        domain="[('line_ids.employee_id.user_id', '=', uid)]"/>
+                <group>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Start date" name="group_date" context="{'group_by': 'date_start'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
     <record id="view_tarco_overtime_form" model="ir.ui.view">
         <field name="name">tarco.hr.overtime.form</field>
         <field name="model">tarco.hr.overtime</field>

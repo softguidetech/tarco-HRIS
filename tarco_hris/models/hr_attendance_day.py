@@ -89,7 +89,7 @@ class TarcoHrAttendanceDay(models.Model):
             ('request_date_to', '>=', date_from),
         ])
         missions = self.env['tarco.hr.mission'].search([
-            ('state', '=', 'approved'),
+            ('state', 'in', ('draft', 'approved', 'done')),
             ('date_start', '<=', date_to),
             ('date_end', '>=', date_from),
             ('line_ids.employee_id', 'in', employees.ids),

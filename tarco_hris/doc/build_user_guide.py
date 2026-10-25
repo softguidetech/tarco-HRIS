@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.20'
+VERSION = 'Module version 19.0.1.0.21'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -864,7 +864,7 @@ def build_story():
         ['Late', 'Punched in after the grace period. The late minutes are shown.'],
         ['Absent', 'No punch on a working day with no leave, mission or holiday.'],
         ['Leave', 'An approved leave covers the day.'],
-        ['Mission', 'An approved mission covers the day.'],
+        ['Mission', 'A mission (draft, approved or done) covers the day for that employee.'],
         ['Public holiday', 'An official holiday, with no punch.'],
         ['Rest day', 'The shift rest day, with no punch.'],
         ['Missing checkout', 'Punched in but not out. Correct the punch in Attendance and sync again.'],
@@ -943,8 +943,11 @@ def build_story():
         'Choose the <b>Mission currency</b>, for example USD for a mission abroad. It defaults to the company currency.',
         'Enter the cost per person per day, in the mission currency, if the mission has an allowance.',
         'Add employees on the lines by code or by name. Each line shows the job and the employee\'s amount.',
-        'HR clicks <b>Approve</b>. Approved missions appear in daily attendance and in every attendance report.',
-        'Click <b>Done</b> when the mission is finished, or <b>Cancel</b> to drop it.',
+        'Save. Each employee is booked on their own calendar for those dates, and their daily attendance '
+        'for those days is set to <b>Mission</b>.',
+        'HR clicks <b>Approve</b>. The calendar stays booked and attendance stays Mission.',
+        'Click <b>Done</b> when the mission is finished, or <b>Cancel</b> to drop it from the calendar and '
+        'from attendance.',
     ]))
     s.append(p('The form calculates the number of days, the number of employees, total hours (hours per day x days x '
                'employees) and the total cost (cost per day x days x employees).'))
@@ -979,6 +982,25 @@ def build_story():
         'signature boxes for the requester, Human Resources and the approver.',
     ]))
     s.append(tip('Print the mission order after approval and hand it to the employees with their allowance.'))
+    s.append(section('7.4 Calendar and attendance'))
+    s.append(p('As soon as the mission is saved with employees and dates, Tarco HRIS books it in two places:'))
+    s.append(table(['Where', 'What you see'], [
+        ['Odoo Calendar', 'One meeting per employee on those dates, named Mission: place — employee. '
+                          'The employee (and you) are attendees, so it appears on that employee\'s calendar only '
+                          'with their name. Draft shows as free time; approved or done shows as busy.'],
+        ['Missions calendar', 'Open %s and switch to the calendar. Filter by employee to see only that person.'
+         % menu('Tarco HRIS > Missions')],
+        ['Daily attendance', 'Each day of the mission for that employee is status <b>Mission</b>, with the place '
+                             'in the note. Open the attendance calendar to see it by employee. Those days are not '
+                             'treated as absence.'],
+    ], [4.4, 12.0]))
+    s.append(bullets([
+        'Click <b>Open calendar</b> on the mission, or the Calendar smart button, to jump to the meetings.',
+        'Each employee line has a Calendar link you can open.',
+        'Changing the dates or employees updates the calendar and rewrites attendance.',
+        'Cancel removes the meetings and recalculates attendance (present, absent, leave, and so on).',
+        'Existing missions are booked on the calendar and attendance when you upgrade to 19.0.1.0.21.',
+    ]))
     s.append(PageBreak())
 
     # 8 Overtime
@@ -1298,6 +1320,11 @@ def build_story():
                                                  'existing adjustment in Payroll instead.'],
         ['Interview not in the calendar.', 'Set the interview date and time, then click Email interview time again. '
                                            'The meeting is created or updated.'],
+        ['Mission not on the calendar or attendance is not Mission.', 'Upgrade to 19.0.1.0.21. Save the mission with '
+                                                                      'at least one employee and dates. Open Calendar '
+                                                                      'or Daily attendance and filter that employee. '
+                                                                      'Cancel clears both; existing missions are '
+                                                                      'booked on upgrade.'],
     ], [5.6, 10.8]))
 
     # Support
