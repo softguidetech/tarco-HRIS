@@ -34,7 +34,7 @@
                 <page name="tarco_hr_file" string="HR File" groups="hr.group_hr_user">
                     <group>
                         <group string="Identity">
-                            <field name="employee_code"/>
+                            <field name="employee_code" placeholder="Generated on save from the joining month"/>
                             <field name="department_id"/>
                             <field name="section_id"/>
                             <field name="job_id"/>
@@ -171,5 +171,15 @@
                 <field name="tarco_gross_wage"/>
             </list>
         </field>
+    </record>
+
+    <record id="action_server_tarco_generate_code" model="ir.actions.server">
+        <field name="name">Generate employee code</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[Command.link(ref('hr.group_hr_user'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_tarco_generate_code()</field>
     </record>
 </odoo>

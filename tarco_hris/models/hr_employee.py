@@ -238,14 +238,55 @@ class HrEmployee(models.Model):
                 vals['tarco_renewal_date'] = hire_date + relativedelta(years=1)
         return vals
 
+    @api.model
+    def _tarco_next_code(self, join_date, reserved):
+        prefix = fields.Date.to_date(join_date).strftime('%Y%m')
+        self.env['hr.employee'].flush_model(['employee_code'])
+        self.env.cr.execute(
+            "SELECT employee_code FROM hr_employee WHERE employee_code LIKE %s", [prefix + '%'])
+        used = {row[0] for row in self.env.cr.fetchall()} | reserved
+        serials = [int(code[len(prefix):]) for code in used
+                   if code.startswith(prefix) and code[len(prefix):].isdigit()]
+        code = '%s%03d' % (prefix, max(serials, default=0) + 1)
+        reserved.add(code)
+        return code
+
+    def _tarco_join_date(self):
+        self.ensure_one()
+        return (self.tarco_hire_date or self.version_id.contract_date_start
+                or (self.create_date and self.create_date.date()) or fields.Date.context_today(self))
+
+    def action_tarco_generate_code(self):
+        employees = self.sudo().sorted(lambda employee: (employee._tarco_join_date(), employee.id))
+        reserved, changed = set(), 0
+        for employee in employees:
+            prefix = employee._tarco_join_date().strftime('%Y%m')
+            code = employee.employee_code or ''
+            if code.startswith(prefix) and code[len(prefix):].isdigit():
+                continue
+            employee.employee_code = self._tarco_next_code(employee._tarco_join_date(), reserved)
+            changed += 1
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'success' if changed else 'info',
+                'message': _('%(changed)s employee code(s) generated, %(kept)s already matched the joining month.',
+                             changed=changed, kept=len(employees) - changed),
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
+        }
+
     @api.model_create_multi
     def create(self, vals_list):
+        reserved = set()
         for vals in vals_list:
             self._tarco_prepare_vals(vals)
+            if not vals.get('employee_code'):
+                join_date = vals.get('tarco_hire_date') or fields.Date.context_today(self)
+                vals['employee_code'] = self._tarco_next_code(join_date, reserved)
         records = super().create(vals_list)
-        for employee in records:
-            if employee.employee_code and not employee.barcode:
-                employee.sudo().write({'barcode': employee.employee_code})
+        records._tarco_code_to_badge()
         records._tarco_push_contract()
         return records
 
@@ -272,10 +313,14 @@ class HrEmployee(models.Model):
         if component_keys.intersection(vals):
             self._tarco_push_contract()
         if vals.get('employee_code'):
-            for employee in self:
-                if employee.employee_code and not employee.barcode:
-                    employee.sudo().write({'barcode': employee.employee_code})
+            self._tarco_code_to_badge()
         return res
+
+    def _tarco_code_to_badge(self):
+        for employee in self:
+            code = employee.employee_code
+            if code and not employee.barcode and code.isascii() and code.isalnum() and len(code) <= 18:
+                employee.sudo().write({'barcode': code})
 
     def _tarco_push_contract(self):
         for employee in self:

@@ -41,6 +41,9 @@
         <field name="model">hr.applicant</field>
         <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_create_meeting']//field[@name='meeting_display_date']" position="replace">
+                <field name="tarco_meeting_display" readonly="1"/>
+            </xpath>
             <xpath expr="//sheet" position="inside">
                 <group string="Tarco screening">
                     <group>
@@ -55,6 +58,7 @@
                         <field name="tarco_interview_round"/>
                         <field name="tarco_interview_datetime"/>
                         <field name="tarco_interview_sent"/>
+                        <field name="tarco_meeting_id" invisible="not tarco_meeting_id"/>
                         <button name="action_send_interview" type="object" string="Email interview time" class="btn-primary"/>
                     </group>
                 </group>

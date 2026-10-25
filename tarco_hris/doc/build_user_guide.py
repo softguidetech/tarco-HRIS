@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.1'
+VERSION = 'Module version 19.0.1.0.3'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -331,6 +331,37 @@ def cover_tiles():
     return grid
 
 
+class ContactCard(Flowable):
+    def wrap(self, avail_width, avail_height):
+        self.width = avail_width
+        return avail_width, 3.0 * cm
+
+    def draw(self):
+        c, w, h = self.canv, self.width, 2.6 * cm
+        y0 = 0.2 * cm
+        c.saveState()
+        c.setFillColor(PALE)
+        c.setStrokeColor(LINE)
+        c.roundRect(0, y0, w, h, 8, stroke=1, fill=1)
+        draw_logo(c, 0.6 * cm, y0 + (h - 1.4 * cm) / 2, 1.4 * cm)
+        x = 2.4 * cm
+        c.setFillColor(NAVY)
+        c.setFont(FB, 14)
+        c.drawString(x, y0 + h - 0.95 * cm, COMPANY)
+        c.setFillColor(TEAL)
+        c.setFont(FSB, 11)
+        c.drawString(x, y0 + h - 1.6 * cm, SITE)
+        c.linkURL('https://' + SITE, (x, y0 + h - 1.75 * cm, x + 6 * cm, y0 + h - 1.25 * cm), relative=1)
+        c.setFillColor(MUTED)
+        c.setFont(F, 9)
+        c.drawString(x, y0 + h - 2.15 * cm, 'Odoo implementation, customisation, training and support')
+        c.restoreState()
+
+
+def contact_card():
+    return ContactCard()
+
+
 class GuideDoc(BaseDocTemplate):
     def __init__(self, filename):
         super().__init__(
@@ -502,8 +533,9 @@ def build_story():
     s.append(section('1.3 How the pieces connect'))
     s.append(flow_diagram())
     s.append(bullets([
-        'The <b>employee code</b> is the key. It is shown in front of the name everywhere, it can be typed in any '
-        'employee field to find the person, and it is copied to the Badge ID used by the fingerprint device.',
+        'The <b>employee code</b> is the key. It is generated automatically from the year and month of joining '
+        '(for example 202610001), it is shown in front of the name everywhere, it can be typed in any employee '
+        'field to find the person, and it is copied to the Badge ID used by the fingerprint device.',
         'Fingerprint punches arrive in Odoo Attendance automatically through the biometric device integration. '
         'Tarco HRIS turns them into one <b>daily attendance</b> line per employee per day.',
         'Approved leave, approved missions and official holidays are written onto the same daily line, so every '
@@ -532,8 +564,9 @@ def build_story():
         'Complete every employee file (next chapter), then click <b>Apply leave scheme</b> on each employee to '
         'give the year\'s leave balance.',
     ]))
-    s.append(note('Employees must have a Badge ID that matches the fingerprint device user ID. When you type an '
-                  'employee code and the Badge ID is empty, the code is copied into it for you.'))
+    s.append(note('Employees must have a Badge ID that matches the fingerprint device user ID. When an employee '
+                  'gets a code and the Badge ID is empty, the code is copied into it for you. A Badge ID that is '
+                  'already filled is never changed.'))
     s.append(PageBreak())
 
     # 3 Employee file
@@ -557,22 +590,44 @@ def build_story():
     s.append(section('3.2 Create a new employee'))
     s.append(steps([
         'Click <b>New</b> and type the employee name.',
-        'On the HR File page enter the <b>Employee code</b>. Two employees cannot share a code.',
-        'Enter the <b>Hire date</b>. The probation end (hire date + 89 days) and the annual renewal date '
-        '(hire date + 1 year) fill in automatically.',
+        'On the HR File page enter the <b>Hire date</b>. The probation end (hire date + 89 days) and the annual '
+        'renewal date (hire date + 1 year) fill in automatically.',
+        'Leave the <b>Employee code</b> empty. It is generated when you save (see 3.3).',
         'Fill the identity, contact and address fields.',
         'Enter the salary components. The gross salary is the total and is copied to the employee contract wage.',
         'Choose the leave scheme and the shift.',
         'Add the documents and tick <b>Received</b> as each one arrives.',
         'Save.',
     ]))
-    s.append(section('3.3 Hiring and audit documents'))
+    s.append(section('3.3 Automatic employee codes'))
+    s.append(p('The employee code is made of the <b>year and month of joining</b> followed by a <b>3-digit serial</b> '
+               'for that month. The code contains only digits, so it can also be used as the fingerprint device ID.'))
+    s.append(table(['Joined', 'Order in the month', 'Code'], [
+        ['3 October 2026', '1st employee', '202610001'],
+        ['20 October 2026', '2nd employee', '202610002'],
+        ['1 March 2024', '1st employee', '202403001'],
+    ], [5.0, 5.0, 6.4]))
+    s.append(bullets([
+        '<b>New employee:</b> the code is created as soon as you save, from the Hire date. If the Hire date is empty, '
+        'the current month is used. You can still type a code yourself to override it.',
+        '<b>Existing employees:</b> in the employee list tick the employees, then choose %s. The joining month comes '
+        'from the Hire date, otherwise the contract start date, otherwise the date the record was created. '
+        'Employees are numbered in the order they joined. Employees whose code already matches their joining '
+        'month are skipped, and a message tells you how many codes were generated.'
+        % menu('Actions > Generate employee code'),
+        '<b>Unique:</b> the serial continues from the highest code already used in that month, including archived '
+        'employees, and the database refuses a duplicate code.',
+    ]))
+    s.append(note('Generating codes for existing employees does not change a Badge ID that is already filled, so '
+                  'fingerprint punches keep matching. Update the device or the Badge ID yourself if you want them '
+                  'to use the new code.'))
+    s.append(section('3.4 Hiring and audit documents'))
     s.append(table(['Group', 'Document kinds'], [
         ['Hiring document', 'Birth certificate, qualification, experience certificates, photograph, national ID, other.'],
         ['Audit document', 'Employment application, employment contract, job description, acknowledgement of work '
                            'regulations, other.'],
     ], [3.8, 12.6]))
-    s.append(section('3.4 Buttons on the employee'))
+    s.append(section('3.5 Buttons on the employee'))
     s.append(table(['Button', 'What it does'], [
         ['Apply leave scheme', 'Creates this year\'s approved casual and annual allocations from the scheme. '
                                'It does nothing for a type that already has an allocation this year.'],
@@ -582,8 +637,10 @@ def build_story():
         ['Print file', 'Opens the employee file report with check boxes to choose the sections.'],
         ['Register resignation / Rehire / Renew contract', 'See chapter 4.'],
         ['Smart buttons', 'Documents, Missions, Penalties, Rewards, Advances and KPIs open the related records.'],
+        ['Actions > Generate employee code', 'Creates the code from the joining month (see 3.3). Also available '
+                                             'for many employees at once from the list.'],
     ], [4.6, 11.8]))
-    s.append(section('3.5 Onboarding notice'))
+    s.append(section('3.6 Onboarding notice'))
     s.append(p('Use it to notify the departments concerned when someone is hired: induction training, safety '
                'briefing, computer, library tools, uniform, or supplies from the warehouse.'))
     s.append(steps([
@@ -593,10 +650,14 @@ def build_story():
         'Click <b>Notify departments</b>. A message is posted on the notice, a to-do activity is created for the '
         'employee\'s manager (or the HR responsible), and an email goes to the manager and the employee.',
     ]))
-    s.append(section('3.6 Finding an employee'))
+    s.append(p('The message is written as a normal letter, ready to read: a welcome line, the list of items to '
+               'prepare, the job position, department, start date and manager, your note, and the HR signature. '
+               'The email subject is <b>Welcome [name] - onboarding arrangements</b>.'))
+    s.append(section('3.7 Finding an employee'))
     s.append(p('Type the employee code or the name in the search bar of any employee list, or in any field that '
                'asks for an employee (missions, penalties, advances and so on). The code is shown in square '
-               'brackets before the name, for example <b>[T0125] Ahmed Ali</b>.'))
+               'brackets before the name, for example <b>[202610001] Ahmed Ali</b>. Typing part of a code, such as '
+               '<b>202610</b>, lists everyone who joined in that month.'))
     s.append(PageBreak())
 
     # 4 Contracts
@@ -826,6 +887,8 @@ def build_story():
         'Add the <b>screening questions</b>. Enter an expected answer to score it, or leave it empty to accept any answer.',
         'Share the <b>Application link</b> (/tarco/jobs/ID/apply) in the job advertisement.',
     ]))
+    s.append(tip('The application link uses the Odoo base URL. It must be reachable from the internet for outside '
+                 'candidates to apply.'))
     s.append(section('11.2 Applications and ranking'))
     s.append(p('Candidates open the link, answer the questions and upload their CV. Each application gets a '
                '<b>Match %</b>: up to 80% for answers that match, plus up to 20% for complete information (name, '
@@ -835,10 +898,24 @@ def build_story():
         'Open %s. Use the filters Shortlisted, Maybe and Rejected.' % menu('Tarco HRIS > Recruitment > Applicants'),
         'On each applicant set the <b>Screening track</b> to Shortlisted, Maybe or Rejected.',
         'Set the <b>Interview</b> date and time and the interview round.',
-        'Click <b>Email interview time</b>. The candidate receives the invitation from the company email.',
+        'Click <b>Email interview time</b>. The candidate receives the invitation from the company email, with the '
+        'date and time in local time.',
     ]))
-    s.append(tip('The application link uses the Odoo base URL. It must be reachable from the internet for outside '
-                 'candidates to apply.'))
+    s.append(PageBreak())
+    s.append(section('11.4 Interview meeting in the calendar'))
+    s.append(p('Email interview time also books the interview in the Odoo calendar, so nobody has to create the '
+               'meeting by hand.'))
+    s.append(bullets([
+        'A one-hour meeting named after the round and the candidate (for example <b>First interview - Ethan '
+        'Carter</b>) is created at the interview date and time.',
+        'The attendees are the candidate, the interviewers, the recruiter, the department manager and you.',
+        'The <b>Meeting</b> smart button at the top of the applicant shows the date and time, for example '
+        '<b>1 Meeting - 29 Oct 2026, 1:00 PM</b>. Click it to open the calendar.',
+        'The <b>Interview meeting</b> field under Tarco screening opens the meeting itself.',
+        'If you change the interview date, time or round, the same meeting moves. No second meeting is created.',
+    ]))
+    s.append(note('Set the interview date and time before clicking Email interview time. Without it Odoo stops with a '
+                  'message instead of sending.'))
     s.append(PageBreak())
 
     # 12 KPIs
@@ -945,16 +1022,50 @@ def build_story():
         ['No contract alert was received.', 'The alert is sent once per date. Make sure the employee and manager have '
                                             'work emails and that outgoing mail is configured.'],
         ['Leave balance is empty.', 'Click Apply leave scheme on the employee.'],
-        ['Code already used.', 'Each employee code must be unique, including archived employees.'],
+        ['Code already used.', 'Each employee code must be unique, including archived employees. Clear the code and '
+                               'save, or use Actions &gt; Generate employee code, to get the next free code.'],
+        ['Employee has no code or an old-style code.', 'Select the employees in the list and use Actions &gt; '
+                                                       'Generate employee code.'],
+        ['Interview not in the calendar.', 'Set the interview date and time, then click Email interview time again. '
+                                           'The meeting is created or updated.'],
     ], [5.6, 10.8]))
 
     # Support
     s.append(CondPageBreak(7 * cm))
     s.append(chapter('17. Support'))
     s.append(p('For training, changes or support on Tarco HRIS, contact <b>%s</b> at <b>%s</b>.' % (COMPANY, SITE)))
+    s.append(contact_card())
     s.append(p('When you report a problem, include the menu you used, the employee code, the record number '
                '(for example PEN/2026/0012) and a screenshot.'))
-    return s
+    return with_heading_breaks(s)
+
+
+def with_heading_breaks(story):
+    def is_heading(flowable):
+        return isinstance(flowable, ChapterBanner) or (
+            isinstance(flowable, Paragraph) and flowable.style.name == 'H2')
+
+    result, i = [], 0
+    while i < len(story):
+        if not is_heading(story[i]):
+            result.append(story[i])
+            i += 1
+            continue
+        group = []
+        while i < len(story) and is_heading(story[i]):
+            group.append(story[i])
+            i += 1
+        if i < len(story):
+            following = story[i]
+            if isinstance(following, Table):
+                result += [CondPageBreak(6 * cm), KeepTogether(group)]
+            else:
+                content = following._content if isinstance(following, KeepTogether) else [following]
+                result.append(KeepTogether(group + list(content)))
+                i += 1
+        else:
+            result += group
+    return result
 
 
 def main():

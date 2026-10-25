@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Tarco HRIS',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.3',
     'category': 'Human Resources',
     'summary': 'Tarco Aviation HRIS: employee file, contracts, attendance, leave, missions, overtime, penalties, loans, recruitment and KPIs',
     'description': """

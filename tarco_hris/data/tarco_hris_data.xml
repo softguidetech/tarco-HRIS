@@ -166,7 +166,7 @@
                     <p>
                         You are invited to an interview for
                         <t t-out="object.job_id.name or ''"/>
-                        on <t t-out="object.tarco_interview_datetime or ''"/>.
+                        on <t t-out="format_datetime(object.tarco_interview_datetime, tz=(object.user_id or user).tz, dt_format='EEEE d MMMM yyyy, h:mm a') if object.tarco_interview_datetime else ''"/>.
                     </p>
                     <p>Tarco Aviation Services - Human Resources</p>
                 </div>

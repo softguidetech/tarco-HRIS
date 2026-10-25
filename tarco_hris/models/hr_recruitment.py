@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
+from odoo.fields import Command
+from odoo.tools import format_datetime
 
 from .tarco_common import QUALIFICATION_SELECTION
 
@@ -69,6 +74,23 @@ class HrApplicant(models.Model):
         ('final', 'Final interview'),
     ], default='none', tracking=True)
     tarco_interview_sent = fields.Boolean(copy=False)
+    tarco_meeting_id = fields.Many2one('calendar.event', string='Interview meeting', copy=False,
+                                       ondelete='set null', readonly=True)
+    tarco_meeting_display = fields.Char(compute='_compute_tarco_meeting_display')
+
+    @api.depends('meeting_ids', 'meeting_ids.start')
+    @api.depends_context('tz')
+    def _compute_tarco_meeting_display(self):
+        now = fields.Datetime.now()
+        for applicant in self:
+            starts = applicant.meeting_ids.mapped('start')
+            if not starts:
+                applicant.tarco_meeting_display = False
+                continue
+            upcoming = [start for start in starts if start >= now]
+            start = min(upcoming) if upcoming else max(starts)
+            applicant.tarco_meeting_display = format_datetime(
+                self.env, start, tz=self.env.user.tz, dt_format='d MMM yyyy, h:mm a')
 
     @api.depends(
         'job_id', 'tarco_answer_ids.answer', 'tarco_cv', 'email_from', 'partner_phone',
@@ -102,17 +124,64 @@ class HrApplicant(models.Model):
                 completeness += 1
             applicant.tarco_match_score = min(score + completeness * 4.0, 100.0)
 
+    def write(self, vals):
+        result = super().write(vals)
+        if {'tarco_interview_datetime', 'tarco_interview_round'} & set(vals):
+            self.filtered('tarco_meeting_id')._tarco_sync_meeting()
+        return result
+
+    def _tarco_meeting_partners(self):
+        self.ensure_one()
+        if not self.partner_id:
+            if not self.partner_name:
+                raise UserError(_('Enter the applicant name before scheduling the interview.'))
+            self.partner_id = self.env['res.partner'].create({
+                'is_company': False,
+                'name': self.partner_name,
+                'email': self.email_from,
+                'phone': self.partner_phone,
+            })
+        return (self.partner_id | self.interviewer_ids.partner_id | self.user_id.partner_id
+                | self.department_id.manager_id.user_id.partner_id | self.env.user.partner_id)
+
+    def _tarco_sync_meeting(self):
+        for applicant in self:
+            if not applicant.tarco_interview_datetime:
+                continue
+            round_label = dict(applicant._fields['tarco_interview_round'].selection).get(
+                applicant.tarco_interview_round if applicant.tarco_interview_round != 'none' else 'first')
+            start = applicant.tarco_interview_datetime
+            vals = {
+                'name': '%s - %s' % (round_label, applicant.partner_name or applicant.display_name),
+                'start': start,
+                'stop': start + timedelta(hours=1),
+                'duration': 1.0,
+                'allday': False,
+                'applicant_id': applicant.id,
+                'res_model_id': self.env['ir.model']._get_id('hr.applicant'),
+                'res_id': applicant.id,
+                'user_id': (applicant.user_id or self.env.user).id,
+                'partner_ids': [Command.set(applicant._tarco_meeting_partners().ids)],
+                'description': applicant.job_id and _('Interview for the position %s', applicant.job_id.name) or False,
+            }
+            if applicant.tarco_meeting_id:
+                applicant.tarco_meeting_id.with_context(no_mail_to_attendees=True).write(vals)
+            else:
+                applicant.tarco_meeting_id = self.env['calendar.event'].with_context(
+                    no_mail_to_attendees=True).create(vals)
+
     def action_send_interview(self):
         template = self.env.ref('tarco_hris.mail_template_tarco_interview', raise_if_not_found=False)
         for applicant in self:
             if not applicant.tarco_interview_datetime:
-                continue
-            if template:
-                template.send_mail(applicant.id, force_send=True)
+                raise UserError(_('Set the interview date and time first.'))
             applicant.write({
-                'tarco_interview_sent': True,
                 'tarco_interview_round': applicant.tarco_interview_round if applicant.tarco_interview_round != 'none' else 'first',
             })
+            applicant._tarco_sync_meeting()
+            if template:
+                template.send_mail(applicant.id, force_send=True)
+            applicant.tarco_interview_sent = True
 
 
 class TarcoHrApplicantAnswer(models.Model):
