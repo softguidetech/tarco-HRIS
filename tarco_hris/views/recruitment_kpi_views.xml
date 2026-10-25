@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_job_form_tarco" model="ir.ui.view">
+        <field name="name">hr.job.form.tarco</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Tarco recruitment">
+                    <group>
+                        <field name="tarco_approved_headcount"/>
+                        <field name="tarco_vacancy"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="tarco_expected_wage"/>
+                        <field name="tarco_years_experience"/>
+                        <field name="tarco_qualification"/>
+                        <field name="tarco_apply_url" widget="url"/>
+                    </group>
+                    <group>
+                        <field name="tarco_objective"/>
+                        <field name="tarco_skills"/>
+                        <field name="tarco_previous_experience"/>
+                        <field name="tarco_training"/>
+                    </group>
+                </group>
+                <button name="action_open_vacancies" type="object" string="Open recruitment for vacancies" class="btn-secondary"/>
+                <field name="tarco_question_ids">
+                    <list editable="bottom">
+                        <field name="sequence"/>
+                        <field name="name"/>
+                        <field name="expected_answer"/>
+                        <field name="required"/>
+                    </list>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_applicant_form_tarco" model="ir.ui.view">
+        <field name="name">hr.applicant.form.tarco</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Tarco screening">
+                    <group>
+                        <field name="tarco_track"/>
+                        <field name="tarco_match_score"/>
+                        <field name="tarco_qualification"/>
+                        <field name="tarco_years_experience"/>
+                        <field name="tarco_cv" filename="tarco_cv_name"/>
+                        <field name="tarco_cv_name" invisible="1"/>
+                    </group>
+                    <group>
+                        <field name="tarco_interview_round"/>
+                        <field name="tarco_interview_datetime"/>
+                        <field name="tarco_interview_sent"/>
+                        <button name="action_send_interview" type="object" string="Email interview time" class="btn-primary"/>
+                    </group>
+                </group>
+                <field name="tarco_answer_ids">
+                    <list editable="bottom">
+                        <field name="question_id"/>
+                        <field name="answer"/>
+                    </list>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_applicant_search_tarco" model="ir.ui.view">
+        <field name="name">hr.applicant.search.tarco</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="Shortlisted" name="shortlisted" domain="[('tarco_track', '=', 'shortlisted')]"/>
+                <filter string="Maybe" name="maybe" domain="[('tarco_track', '=', 'maybe')]"/>
+                <filter string="Rejected" name="rejected" domain="[('tarco_track', '=', 'rejected')]"/>
+                <filter string="First interview" name="first_interview" domain="[('tarco_interview_round', '=', 'first')]"/>
+                <filter string="Final interview" name="final_interview" domain="[('tarco_interview_round', '=', 'final')]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_tarco_kpi_template_form" model="ir.ui.view">
+        <field name="name">tarco.hr.kpi.template.form</field>
+        <field name="model">tarco.hr.kpi.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="active"/>
+                    </group>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="sequence"/>
+                            <field name="name"/>
+                            <field name="weight"/>
+                            <field name="max_score"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_kpi_template_list" model="ir.ui.view">
+        <field name="name">tarco.hr.kpi.template.list</field>
+        <field name="model">tarco.hr.kpi.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_kpi_review_form" model="ir.ui.view">
+        <field name="name">tarco.hr.kpi.review.form</field>
+        <field name="model">tarco.hr.kpi.review</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_load_template" type="object" string="Load questions" invisible="state != 'draft'"/>
+                    <button name="action_done" type="object" string="Done" invisible="state != 'draft'" class="btn-primary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="employee_id"/>
+                            <field name="employee_code"/>
+                            <field name="department_id"/>
+                            <field name="reviewer_user_id"/>
+                            <field name="template_id"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="actual_hours"/>
+                            <field name="scheduled_hours"/>
+                            <field name="hours_ratio"/>
+                            <field name="output_quality"/>
+                            <field name="score"/>
+                        </group>
+                    </group>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="name"/>
+                            <field name="weight"/>
+                            <field name="max_score"/>
+                            <field name="score"/>
+                            <field name="is_problem"/>
+                            <field name="comment"/>
+                        </list>
+                    </field>
+                    <field name="output_ids">
+                        <list editable="bottom">
+                            <field name="output_date"/>
+                            <field name="description"/>
+                            <field name="quality"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_kpi_review_list" model="ir.ui.view">
+        <field name="name">tarco.hr.kpi.review.list</field>
+        <field name="model">tarco.hr.kpi.review</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="score"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <template id="tarco_job_apply_form" name="Tarco job application">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <title>Apply</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto;">
+                <h1 t-out="job.name"/>
+                <p t-if="job.tarco_objective" t-out="job.tarco_objective"/>
+                <p t-if="error" style="color: #a40000;" t-out="error"/>
+                <form t-att-action="'/tarco/jobs/%s/apply' % job.id" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <p><label>Name<br/><input name="partner_name" required="required" style="width: 100%"/></label></p>
+                    <p><label>Email<br/><input name="email_from" type="email" required="required" style="width: 100%"/></label></p>
+                    <p><label>Phone<br/><input name="partner_phone" style="width: 100%"/></label></p>
+                    <p><label>Years of experience<br/><input name="years" type="number" step="0.5" style="width: 100%"/></label></p>
+                    <p>
+                        <label>Qualification<br/>
+                            <select name="qualification" style="width: 100%">
+                                <option value=""/>
+                                <t t-foreach="qualifications" t-as="item">
+                                    <option t-att-value="item[0]" t-out="item[1]"/>
+                                </t>
+                            </select>
+                        </label>
+                    </p>
+                    <t t-foreach="job.tarco_question_ids" t-as="question">
+                        <p>
+                            <label>
+                                <t t-out="question.name"/>
+                                <br/>
+                                <input type="text" t-att-name="'question_%s' % question.id" t-att-required="question.required and 'required' or None" style="width: 100%"/>
+                            </label>
+                        </p>
+                    </t>
+                    <p><label>CV<br/><input name="cv" type="file"/></label></p>
+                    <p><label>Cover note<br/><textarea name="description" style="width: 100%"></textarea></label></p>
+                    <p><button type="submit">Submit application</button></p>
+                </form>
+            </body>
+        </html>
+    </template>
+
+    <template id="tarco_job_apply_thanks" name="Tarco job application thanks">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <title>Application received</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto;">
+                <h1>Application received</h1>
+                <p>Thank you. Human resources will review your application for <t t-out="job.name"/>.</p>
+            </body>
+        </html>
+    </template>
+</odoo>

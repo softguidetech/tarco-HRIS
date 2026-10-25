@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_leave_form_tarco" model="ir.ui.view">
+        <field name="name">hr.leave.form.tarco</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='holiday_status_id']" position="after">
+                <field name="tarco_deduction_mode"/>
+                <field name="tarco_deduction_percent" invisible="tarco_deduction_mode != 'partial'"/>
+                <field name="tarco_remaining_days" readonly="1"/>
+                <field name="tarco_taken_month" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_tarco_shift_form" model="ir.ui.view">
+        <field name="name">tarco.hr.shift.form</field>
+        <field name="model">tarco.hr.shift</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="hour_from" widget="float_time"/>
+                            <field name="hour_to" widget="float_time"/>
+                            <field name="overnight"/>
+                            <field name="grace_minutes"/>
+                            <field name="standard_hours"/>
+                            <field name="ot_after" widget="float_time"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Rest days">
+                            <field name="rest_monday"/>
+                            <field name="rest_tuesday"/>
+                            <field name="rest_wednesday"/>
+                            <field name="rest_thursday"/>
+                            <field name="rest_friday"/>
+                            <field name="rest_saturday"/>
+                            <field name="rest_sunday"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="department_ids" widget="many2many_tags"/>
+                        <field name="job_ids" widget="many2many_tags"/>
+                        <field name="employee_ids" widget="many2many_tags"/>
+                        <field name="exempt_employee_ids" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_shift_list" model="ir.ui.view">
+        <field name="name">tarco.hr.shift.list</field>
+        <field name="model">tarco.hr.shift</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="hour_from" widget="float_time"/>
+                <field name="hour_to" widget="float_time"/>
+                <field name="standard_hours"/>
+                <field name="ot_after" widget="float_time"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_attendance_day_list" model="ir.ui.view">
+        <field name="name">tarco.hr.attendance.day.list</field>
+        <field name="model">tarco.hr.attendance.day</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <field name="work_date"/>
+                <field name="employee_code"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="status"/>
+                <field name="late_minutes"/>
+                <field name="regular_hours"/>
+                <field name="overtime_hours"/>
+                <field name="overtime_rate"/>
+                <field name="overtime_amount"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_tarco_attendance_day_search" model="ir.ui.view">
+        <field name="name">tarco.hr.attendance.day.search</field>
+        <field name="model">tarco.hr.attendance.day</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="employee_code"/>
+                <field name="department_id"/>
+                <filter string="Absent" name="absent" domain="[('status', '=', 'absent')]"/>
+                <filter string="Late" name="late" domain="[('status', '=', 'late')]"/>
+                <filter string="Leave" name="leave" domain="[('status', '=', 'leave')]"/>
+                <filter string="Mission" name="mission" domain="[('status', '=', 'mission')]"/>
+                <group>
+                    <filter string="Department" name="group_department" context="{'group_by': 'department_id'}"/>
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Date" name="group_date" context="{'group_by': 'work_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_tarco_holiday_form" model="ir.ui.view">
+        <field name="name">tarco.hr.public.holiday.form</field>
+        <field name="model">tarco.hr.public.holiday</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_publish" type="object" string="Publish on calendar" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="holiday_date"/>
+                        <field name="moved_date"/>
+                        <field name="observed_date"/>
+                        <field name="note"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_holiday_list" model="ir.ui.view">
+        <field name="name">tarco.hr.public.holiday.list</field>
+        <field name="model">tarco.hr.public.holiday</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="holiday_date"/>
+                <field name="moved_date"/>
+                <field name="observed_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_encashment_form" model="ir.ui.view">
+        <field name="name">tarco.hr.leave.encashment.form</field>
+        <field name="model">tarco.hr.leave.encashment</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" invisible="state != 'draft'" class="btn-primary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="employee_id"/>
+                        <field name="encash_date"/>
+                        <field name="days"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="daily_rate"/>
+                        <field name="amount"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_encashment_list" model="ir.ui.view">
+        <field name="name">tarco.hr.leave.encashment.list</field>
+        <field name="model">tarco.hr.leave.encashment</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="encash_date"/>
+                <field name="days"/>
+                <field name="amount"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_mission_form" model="ir.ui.view">
+        <field name="name">tarco.hr.mission.form</field>
+        <field name="model">tarco.hr.mission</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_approve" type="object" string="Approve" invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_done" type="object" string="Done" invisible="state != 'approved'"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state in ('cancel', 'done')"/>
+                    <button name="action_draft" type="object" string="Reset" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,done"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="place"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="number_of_days"/>
+                            <field name="hour_start" widget="float_time"/>
+                            <field name="hour_end" widget="float_time"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="per_diem"/>
+                            <field name="employee_count"/>
+                            <field name="total_hours"/>
+                            <field name="cost"/>
+                        </group>
+                    </group>
+                    <field name="purpose"/>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="employee_id"/>
+                            <field name="employee_code"/>
+                            <field name="department_id"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_mission_list" model="ir.ui.view">
+        <field name="name">tarco.hr.mission.list</field>
+        <field name="model">tarco.hr.mission</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="place"/>
+                <field name="date_start"/>
+                <field name="number_of_days"/>
+                <field name="employee_count"/>
+                <field name="total_hours"/>
+                <field name="cost"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_overtime_form" model="ir.ui.view">
+        <field name="name">tarco.hr.overtime.form</field>
+        <field name="model">tarco.hr.overtime</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_fill" type="object" string="Fill from fingerprint" invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_confirm" type="object" string="Confirm and post" invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state != 'confirmed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="department_id"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="total_hours"/>
+                        <field name="total_amount"/>
+                    </group>
+                    <field name="line_ids">
+                        <list>
+                            <field name="employee_code"/>
+                            <field name="employee_id"/>
+                            <field name="department_id"/>
+                            <field name="hours_15"/>
+                            <field name="hours_20"/>
+                            <field name="hours"/>
+                            <field name="amount"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_overtime_list" model="ir.ui.view">
+        <field name="name">tarco.hr.overtime.list</field>
+        <field name="model">tarco.hr.overtime</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="total_hours"/>
+                <field name="total_amount"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_penalty_rule_list" model="ir.ui.view">
+        <field name="name">tarco.hr.penalty.rule.list</field>
+        <field name="model">tarco.hr.penalty.rule</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="category"/>
+                <field name="calculation"/>
+                <field name="auto_from_attendance"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_tarco_penalty_rule_form" model="ir.ui.view">
+        <field name="name">tarco.hr.penalty.rule.form</field>
+        <field name="model">tarco.hr.penalty.rule</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="category"/>
+                        <field name="calculation"/>
+                        <field name="fixed_amount"/>
+                        <field name="default_days"/>
+                        <field name="default_hours"/>
+                        <field name="default_percent"/>
+                        <field name="auto_from_attendance"/>
+                        <field name="active"/>
+                    </group>
+                    <field name="reason_text"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tarco_penalty_form" model="ir.ui.view">
+        <field name="name">tarco.hr.penalty.form</field>
+        <field name="model">tarco.hr.penalty</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_fill_department" type="object" string="Add department" invisible="state != 'draft'"/>
+                    <button name="action_confirm" type="object" string="Confirm" invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state != 'confirmed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="rule_id"/>
+                        <field name="penalty_date"/>
+                        <field name="start_date"/>
+                        <field name="department_id"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="total_amount"/>
+                    </group>
+                    <field name="reason"/>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="employee_id"/>
+                            <field name="employee_code"/>
+                            <field name="basic_wage"/>
+                            <field name="gross_wage"/>
+                            <field name="days"/>
+                            <field name="hours"/>
+                            <field name="amount"/>
+                            <field name="repeat_count"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_penalty_list" model="ir.ui.view">
+        <field name="name">tarco.hr.penalty.list</field>
+        <field name="model">tarco.hr.penalty</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="penalty_date"/>
+                <field name="rule_id"/>
+                <field name="total_amount"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_reward_form" model="ir.ui.view">
+        <field name="name">tarco.hr.reward.form</field>
+        <field name="model">tarco.hr.reward</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" invisible="state != 'draft'" class="btn-primary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="employee_id"/>
+                            <field name="employee_code"/>
+                            <field name="department_id"/>
+                            <field name="section_id"/>
+                            <field name="reason"/>
+                            <field name="reward_date"/>
+                            <field name="mode"/>
+                            <field name="days" invisible="mode != 'days'"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount"/>
+                        </group>
+                        <group string="Wage">
+                            <field name="basic_wage"/>
+                            <field name="cola"/>
+                            <field name="transport_allowance"/>
+                            <field name="housing_allowance"/>
+                            <field name="other_allowance"/>
+                            <field name="gross_wage"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_reward_list" model="ir.ui.view">
+        <field name="name">tarco.hr.reward.list</field>
+        <field name="model">tarco.hr.reward</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="reason"/>
+                <field name="amount"/>
+                <field name="reward_date"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_advance_form" model="ir.ui.view">
+        <field name="name">tarco.hr.advance.form</field>
+        <field name="model">tarco.hr.advance</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft', 'running')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="employee_id"/>
+                        <field name="employee_code"/>
+                        <field name="advance_type"/>
+                        <field name="description"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="amount"/>
+                        <field name="installment_count" invisible="advance_type == 'short'"/>
+                        <field name="monthly_amount"/>
+                        <field name="due_date"/>
+                        <field name="paid_amount"/>
+                        <field name="remaining_amount"/>
+                    </group>
+                    <field name="line_ids">
+                        <list>
+                            <field name="sequence"/>
+                            <field name="due_date"/>
+                            <field name="amount"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_advance_list" model="ir.ui.view">
+        <field name="name">tarco.hr.advance.list</field>
+        <field name="model">tarco.hr.advance</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="advance_type"/>
+                <field name="amount"/>
+                <field name="remaining_amount"/>
+                <field name="due_date"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tarco_onboarding_form" model="ir.ui.view">
+        <field name="name">tarco.hr.onboarding.form</field>
+        <field name="model">tarco.hr.onboarding</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send" type="object" string="Notify departments" invisible="state != 'draft'" class="btn-primary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="employee_id"/>
+                        <field name="department_id"/>
+                        <field name="need_training"/>
+                        <field name="need_safety"/>
+                        <field name="need_computer"/>
+                        <field name="need_library"/>
+                        <field name="need_uniform"/>
+                        <field name="need_warehouse"/>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_tarco_onboarding_list" model="ir.ui.view">
+        <field name="name">tarco.hr.onboarding.list</field>
+        <field name="model">tarco.hr.onboarding</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+</odoo>

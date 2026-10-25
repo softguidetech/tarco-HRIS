@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_tarco_hris" model="ir.ui.view">
+        <field name="name">hr.employee.form.tarco.hris</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_tarco_resign" type="object" string="Register resignation" groups="hr.group_hr_user" invisible="tarco_resignation_date"/>
+                <button name="action_tarco_rehire" type="object" string="Rehire" groups="hr.group_hr_user" invisible="not tarco_resignation_date"/>
+                <button name="action_tarco_renew" type="object" string="Renew contract" groups="hr.group_hr_user"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_tarco_open_documents" type="object" class="oe_stat_button" icon="fa-folder-open" groups="hr.group_hr_user">
+                    <field name="tarco_document_count" widget="statinfo" string="Documents"/>
+                </button>
+                <button name="action_tarco_open_missions" type="object" class="oe_stat_button" icon="fa-plane" groups="hr.group_hr_user">
+                    <field name="tarco_mission_count" widget="statinfo" string="Missions"/>
+                </button>
+                <button name="action_tarco_open_penalties" type="object" class="oe_stat_button" icon="fa-gavel" groups="hr.group_hr_user">
+                    <field name="tarco_penalty_count" widget="statinfo" string="Penalties"/>
+                </button>
+                <button name="action_tarco_open_rewards" type="object" class="oe_stat_button" icon="fa-gift" groups="hr.group_hr_user">
+                    <field name="tarco_reward_count" widget="statinfo" string="Rewards"/>
+                </button>
+                <button name="action_tarco_open_advances" type="object" class="oe_stat_button" icon="fa-money" groups="hr.group_hr_user">
+                    <field name="tarco_advance_count" widget="statinfo" string="Advances"/>
+                </button>
+                <button name="action_tarco_open_kpi" type="object" class="oe_stat_button" icon="fa-line-chart" groups="hr.group_hr_user">
+                    <field name="tarco_kpi_count" widget="statinfo" string="KPIs"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='hr_settings']" position="before">
+                <page name="tarco_hr_file" string="HR File" groups="hr.group_hr_user">
+                    <group>
+                        <group string="Identity">
+                            <field name="employee_code"/>
+                            <field name="department_id"/>
+                            <field name="section_id"/>
+                            <field name="job_id"/>
+                            <field name="tarco_hire_date"/>
+                            <field name="birthday"/>
+                            <field name="country_id"/>
+                            <field name="sex"/>
+                            <field name="marital"/>
+                            <field name="tarco_religion"/>
+                            <field name="certificate"/>
+                            <field name="study_field"/>
+                            <field name="study_school"/>
+                            <field name="tarco_experience_years"/>
+                        </group>
+                        <group string="Contact and address">
+                            <field name="private_phone"/>
+                            <field name="mobile_phone"/>
+                            <field name="emergency_phone"/>
+                            <field name="private_email"/>
+                            <field name="work_email"/>
+                            <field name="tarco_state_id"/>
+                            <field name="tarco_city"/>
+                            <field name="tarco_district"/>
+                            <field name="tarco_square"/>
+                        </group>
+                    </group>
+                    <group string="Contract">
+                        <group>
+                            <field name="tarco_trial_date_end"/>
+                            <field name="tarco_trial_manual"/>
+                            <field name="tarco_renewal_date"/>
+                            <field name="tarco_renewal_manual"/>
+                            <field name="tarco_due_kind"/>
+                            <field name="tarco_service_display"/>
+                        </group>
+                        <group>
+                            <field name="tarco_resignation_date"/>
+                            <field name="tarco_rehire_date"/>
+                            <field name="tarco_shift_id"/>
+                            <field name="tarco_exempt_late"/>
+                            <field name="tarco_overtime_mode"/>
+                        </group>
+                    </group>
+                    <group string="Salary">
+                        <field name="currency_id" invisible="1"/>
+                        <field name="tarco_basic_wage"/>
+                        <field name="tarco_cola"/>
+                        <field name="tarco_transport_allowance"/>
+                        <field name="tarco_housing_allowance"/>
+                        <field name="tarco_other_allowance"/>
+                        <field name="tarco_gross_wage"/>
+                        <field name="tarco_subject_to_tax"/>
+                        <field name="tarco_tax_rate" invisible="not tarco_subject_to_tax"/>
+                        <field name="tarco_subject_to_insurance"/>
+                        <field name="tarco_insurance_rate" invisible="not tarco_subject_to_insurance"/>
+                    </group>
+                    <group string="Leave balance">
+                        <field name="tarco_leave_scheme"/>
+                        <field name="tarco_casual_days"/>
+                        <field name="tarco_regular_days"/>
+                    </group>
+                    <div>
+                        <button name="action_tarco_apply_leave_scheme" type="object" string="Apply leave scheme" class="btn-secondary"/>
+                        <button name="action_tarco_post_statutory" type="object" string="Post tax and insurance" class="btn-secondary"/>
+                        <button name="action_tarco_onboarding" type="object" string="Onboarding notice" class="btn-secondary"/>
+                        <button name="action_tarco_employee_report" type="object" string="Print file" class="btn-primary"/>
+                    </div>
+                    <group string="Hiring and audit documents">
+                        <field name="tarco_document_ids" nolabel="1" colspan="2">
+                            <list editable="bottom">
+                                <field name="group_type"/>
+                                <field name="kind"/>
+                                <field name="received"/>
+                                <field name="document_date"/>
+                                <field name="datas" filename="datas_fname" widget="binary"/>
+                                <field name="datas_fname" column_invisible="1"/>
+                                <field name="note"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_tree_tarco_hris" model="ir.ui.view">
+        <field name="name">hr.employee.list.tarco.hris</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="employee_code" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_filter_tarco_hris" model="ir.ui.view">
+        <field name="name">hr.employee.search.tarco.hris</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="filter_domain">['|', '|', ('employee_code', 'ilike', self), ('work_email', 'ilike', self), ('name', 'ilike', self)]</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="employee_code"/>
+            </xpath>
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="Probation ending (10 days)" name="probation_due" domain="[('tarco_due_kind', '=', 'probation')]"/>
+                <filter string="Renewal due (10 days)" name="renewal_due" domain="[('tarco_due_kind', '=', 'renewal')]"/>
+                <filter string="Resigned" name="resigned" domain="[('tarco_resignation_date', '!=', False)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_contract_list" model="ir.ui.view">
+        <field name="name">hr.employee.contract.list.tarco</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="employee_code"/>
+                <field name="name"/>
+                <field name="department_id"/>
+                <field name="section_id"/>
+                <field name="job_id"/>
+                <field name="tarco_hire_date"/>
+                <field name="tarco_trial_date_end"/>
+                <field name="tarco_renewal_date"/>
+                <field name="tarco_due_kind"/>
+                <field name="tarco_resignation_date"/>
+                <field name="tarco_rehire_date"/>
+                <field name="tarco_service_display"/>
+                <field name="tarco_gross_wage"/>
+            </list>
+        </field>
+    </record>
+</odoo>

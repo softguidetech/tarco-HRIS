@@ -1,0 +1,504 @@
+# -*- coding: utf-8 -*-
+from datetime import timedelta
+
+from dateutil.relativedelta import relativedelta
+
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError, ValidationError
+from odoo.fields import Domain
+
+from .tarco_common import (
+    QUALIFICATION_SELECTION,
+    RELIGION_SELECTION,
+    tarco_daily_wage,
+    tarco_gross,
+    tarco_post_adjustment,
+)
+
+
+class HrEmployee(models.Model):
+    _inherit = 'hr.employee'
+
+    _employee_code_unique = models.Constraint(
+        'unique(employee_code)',
+        'The employee code is already used.',
+    )
+
+    employee_code = fields.Char(
+        string='Employee Code',
+        copy=False,
+        index=True,
+        tracking=True,
+        groups='hr.group_hr_user',
+        help='Primary key used to search and link every HR record.',
+    )
+    section_id = fields.Many2one(
+        'hr.department', string='Section', tracking=True, groups='hr.group_hr_user',
+    )
+    tarco_experience_years = fields.Float(string='Years of Experience', groups='hr.group_hr_user', tracking=True)
+    tarco_religion = fields.Selection(RELIGION_SELECTION, string='Religion', groups='hr.group_hr_user', tracking=True)
+    tarco_state_id = fields.Many2one('res.country.state', string='State', groups='hr.group_hr_user')
+    tarco_city = fields.Char(string='City', groups='hr.group_hr_user')
+    tarco_district = fields.Char(string='District', groups='hr.group_hr_user')
+    tarco_square = fields.Char(string='Block', groups='hr.group_hr_user')
+
+    tarco_hire_date = fields.Date(string='Hire Date', tracking=True, groups='hr.group_hr_user')
+    tarco_trial_manual = fields.Boolean(string='Probation Set Manually', groups='hr.group_hr_user')
+    tarco_trial_date_end = fields.Date(string='Probation End', tracking=True, groups='hr.group_hr_user')
+    tarco_renewal_manual = fields.Boolean(string='Renewal Set Manually', groups='hr.group_hr_user')
+    tarco_renewal_date = fields.Date(string='Annual Renewal Date', tracking=True, groups='hr.group_hr_user')
+    tarco_resignation_date = fields.Date(string='Resignation Date', tracking=True, copy=False, groups='hr.group_hr_user')
+    tarco_rehire_date = fields.Date(string='Rehire Date', tracking=True, copy=False, groups='hr.group_hr_user')
+    tarco_probation_alerted = fields.Boolean(copy=False, groups='hr.group_hr_user')
+    tarco_renewal_alerted = fields.Boolean(copy=False, groups='hr.group_hr_user')
+    tarco_due_kind = fields.Selection(
+        [('probation', 'Probation ending'), ('renewal', 'Renewal due')],
+        string='Contract Alert',
+        compute='_compute_tarco_due_kind',
+        search='_search_tarco_due_kind',
+        groups='hr.group_hr_user',
+    )
+    tarco_service_display = fields.Char(string='Length of Service', compute='_compute_tarco_service', groups='hr.group_hr_user')
+    tarco_service_years = fields.Integer(compute='_compute_tarco_service', groups='hr.group_hr_user')
+    tarco_service_months = fields.Integer(compute='_compute_tarco_service', groups='hr.group_hr_user')
+    tarco_service_days = fields.Integer(compute='_compute_tarco_service', groups='hr.group_hr_user')
+
+    tarco_basic_wage = fields.Monetary(string='Basic Salary', tracking=True, groups='hr.group_hr_user')
+    tarco_cola = fields.Monetary(string='Cost of Living Allowance', tracking=True, groups='hr.group_hr_user')
+    tarco_transport_allowance = fields.Monetary(string='Transport Allowance', tracking=True, groups='hr.group_hr_user')
+    tarco_housing_allowance = fields.Monetary(string='Housing Allowance (بدل السكن)', tracking=True, groups='hr.group_hr_user')
+    tarco_other_allowance = fields.Monetary(string='Other Allowances (بدلات أخرى)', tracking=True, groups='hr.group_hr_user')
+    tarco_gross_wage = fields.Monetary(
+        string='Gross Salary', compute='_compute_tarco_gross_wage', store=True, groups='hr.group_hr_user',
+    )
+    tarco_subject_to_tax = fields.Boolean(string='Subject to Tax', groups='hr.group_hr_user')
+    tarco_tax_rate = fields.Float(string='Tax %', groups='hr.group_hr_user')
+    tarco_subject_to_insurance = fields.Boolean(string='Subject to Social Insurance', groups='hr.group_hr_user')
+    tarco_insurance_rate = fields.Float(string='Social Insurance %', groups='hr.group_hr_user')
+
+    tarco_leave_scheme = fields.Selection(
+        [('21', '21 days (6 casual + 15 annual)'), ('30', '30 days (6 casual + 24 annual)')],
+        string='Annual Leave Scheme',
+        default='21',
+        groups='hr.group_hr_user',
+        tracking=True,
+    )
+    tarco_casual_days = fields.Float(
+        string='Casual Days', compute='_compute_tarco_leave_split', store=True, readonly=False, groups='hr.group_hr_user',
+    )
+    tarco_regular_days = fields.Float(
+        string='Annual Days', compute='_compute_tarco_leave_split', store=True, readonly=False, groups='hr.group_hr_user',
+    )
+    tarco_shift_id = fields.Many2one('tarco.hr.shift', string='Shift', groups='hr.group_hr_user')
+    tarco_exempt_late = fields.Boolean(string='Exempt from Lateness', groups='hr.group_hr_user')
+    tarco_overtime_mode = fields.Selection(
+        [('time_half', 'Hour x 1.5 / 2'), ('none', 'Do not pay overtime')],
+        string='Overtime Calculation',
+        default='time_half',
+        groups='hr.group_hr_user',
+    )
+    tarco_document_ids = fields.One2many('tarco.hr.document', 'employee_id', string='Documents', groups='hr.group_hr_user')
+    tarco_document_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_mission_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_penalty_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_reward_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_advance_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_kpi_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+
+    @api.model
+    def _get_certificate_selection(self):
+        return QUALIFICATION_SELECTION
+
+    @api.depends(
+        'tarco_basic_wage', 'tarco_cola', 'tarco_transport_allowance',
+        'tarco_housing_allowance', 'tarco_other_allowance',
+    )
+    def _compute_tarco_gross_wage(self):
+        for employee in self:
+            employee.tarco_gross_wage = (
+                (employee.tarco_basic_wage or 0.0)
+                + (employee.tarco_cola or 0.0)
+                + (employee.tarco_transport_allowance or 0.0)
+                + (employee.tarco_housing_allowance or 0.0)
+                + (employee.tarco_other_allowance or 0.0)
+            )
+
+    @api.depends('tarco_leave_scheme')
+    def _compute_tarco_leave_split(self):
+        for employee in self:
+            if employee.tarco_leave_scheme == '30':
+                employee.tarco_casual_days = 6
+                employee.tarco_regular_days = 24
+            else:
+                employee.tarco_casual_days = 6
+                employee.tarco_regular_days = 15
+
+    @api.depends('tarco_hire_date', 'tarco_resignation_date', 'tarco_rehire_date')
+    def _compute_tarco_service(self):
+        today = fields.Date.context_today(self)
+        for employee in self:
+            start = employee.tarco_rehire_date or employee.tarco_hire_date
+            end = employee.tarco_resignation_date or today
+            if not start or end < start:
+                employee.tarco_service_years = 0
+                employee.tarco_service_months = 0
+                employee.tarco_service_days = 0
+                employee.tarco_service_display = False
+                continue
+            delta = relativedelta(end, start)
+            employee.tarco_service_years = delta.years
+            employee.tarco_service_months = delta.months
+            employee.tarco_service_days = delta.days
+            employee.tarco_service_display = _('%s years, %s months, %s days') % (
+                delta.years, delta.months, delta.days,
+            )
+
+    @api.depends('tarco_trial_date_end', 'tarco_renewal_date', 'tarco_resignation_date')
+    def _compute_tarco_due_kind(self):
+        today = fields.Date.context_today(self)
+        limit = today + timedelta(days=10)
+        for employee in self:
+            kind = False
+            if not employee.tarco_resignation_date:
+                if employee.tarco_trial_date_end and today <= employee.tarco_trial_date_end <= limit:
+                    kind = 'probation'
+                elif employee.tarco_renewal_date and today <= employee.tarco_renewal_date <= limit:
+                    kind = 'renewal'
+            employee.tarco_due_kind = kind
+
+    def _search_tarco_due_kind(self, operator, value):
+        today = fields.Date.context_today(self)
+        limit = today + timedelta(days=10)
+        if value == 'probation':
+            return [
+                ('tarco_trial_date_end', '>=', today),
+                ('tarco_trial_date_end', '<=', limit),
+                ('tarco_resignation_date', '=', False),
+            ]
+        if value == 'renewal':
+            return [
+                ('tarco_renewal_date', '>=', today),
+                ('tarco_renewal_date', '<=', limit),
+                ('tarco_resignation_date', '=', False),
+            ]
+        return [('id', '=', 0)] if operator == '=' else []
+
+    def _compute_tarco_counts(self):
+        for employee in self:
+            employee.tarco_document_count = len(employee.tarco_document_ids)
+            employee.tarco_mission_count = self.env['tarco.hr.mission.line'].search_count([
+                ('employee_id', '=', employee.id),
+            ])
+            employee.tarco_penalty_count = self.env['tarco.hr.penalty.line'].search_count([
+                ('employee_id', '=', employee.id),
+            ])
+            employee.tarco_reward_count = self.env['tarco.hr.reward'].search_count([
+                ('employee_id', '=', employee.id),
+            ])
+            employee.tarco_advance_count = self.env['tarco.hr.advance'].search_count([
+                ('employee_id', '=', employee.id),
+            ])
+            employee.tarco_kpi_count = self.env['tarco.hr.kpi.review'].search_count([
+                ('employee_id', '=', employee.id),
+            ])
+
+    def _compute_display_name(self):
+        super()._compute_display_name()
+        if not (self.env.su or self.env.user.has_group('hr.group_hr_user')):
+            return
+        for employee in self:
+            code = employee.employee_code
+            label = employee.display_name or employee.name or ''
+            if code and not str(label).startswith('[%s]' % code):
+                employee.display_name = '[%s] %s' % (code, label)
+
+    @api.model
+    def name_search(self, name='', domain=None, operator='ilike', limit=100):
+        result = super().name_search(name=name, domain=domain, operator=operator, limit=limit)
+        if not name or not (self.env.su or self.env.user.has_group('hr.group_hr_user')):
+            return result
+        found = {row[0] for row in result}
+        remaining = None if not limit else max(limit - len(result), 0)
+        if remaining == 0:
+            return result
+        code_domain = Domain('employee_code', operator, name) & Domain(domain or Domain.TRUE)
+        extras = self.search(code_domain, limit=remaining).filtered(lambda employee: employee.id not in found)
+        return result + [(employee.id, employee.display_name) for employee in extras]
+
+    @api.model
+    def _tarco_prepare_vals(self, vals):
+        if vals.get('employee_code') == '':
+            vals['employee_code'] = False
+        hire = vals.get('tarco_hire_date')
+        if hire:
+            hire_date = fields.Date.to_date(hire)
+            if hire_date and not vals.get('tarco_trial_manual') and not vals.get('tarco_trial_date_end'):
+                vals['tarco_trial_date_end'] = hire_date + timedelta(days=89)
+            if hire_date and not vals.get('tarco_renewal_manual') and not vals.get('tarco_renewal_date'):
+                vals['tarco_renewal_date'] = hire_date + relativedelta(years=1)
+        return vals
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._tarco_prepare_vals(vals)
+        records = super().create(vals_list)
+        for employee in records:
+            if employee.employee_code and not employee.barcode:
+                employee.sudo().write({'barcode': employee.employee_code})
+        records._tarco_push_contract()
+        return records
+
+    def write(self, vals):
+        vals = dict(vals)
+        if vals.get('employee_code') == '':
+            vals['employee_code'] = False
+        if 'tarco_trial_date_end' in vals and 'tarco_probation_alerted' not in vals:
+            vals['tarco_probation_alerted'] = False
+        if 'tarco_renewal_date' in vals and 'tarco_renewal_alerted' not in vals:
+            vals['tarco_renewal_alerted'] = False
+        if vals.get('tarco_hire_date') and not vals.get('tarco_trial_manual'):
+            hire_date = fields.Date.to_date(vals['tarco_hire_date'])
+            if 'tarco_trial_date_end' not in vals:
+                vals['tarco_trial_date_end'] = hire_date + timedelta(days=89)
+            if 'tarco_renewal_date' not in vals and not vals.get('tarco_renewal_manual'):
+                vals['tarco_renewal_date'] = hire_date + relativedelta(years=1)
+        res = super().write(vals)
+        component_keys = {
+            'tarco_basic_wage', 'tarco_cola', 'tarco_transport_allowance',
+            'tarco_housing_allowance', 'tarco_other_allowance',
+            'tarco_hire_date', 'tarco_trial_date_end',
+        }
+        if component_keys.intersection(vals):
+            self._tarco_push_contract()
+        if vals.get('employee_code'):
+            for employee in self:
+                if employee.employee_code and not employee.barcode:
+                    employee.sudo().write({'barcode': employee.employee_code})
+        return res
+
+    def _tarco_push_contract(self):
+        for employee in self:
+            version = employee.version_id
+            if not version:
+                continue
+            version_vals = {}
+            if employee.tarco_hire_date and version.contract_date_start != employee.tarco_hire_date:
+                version_vals['contract_date_start'] = employee.tarco_hire_date
+            if employee.tarco_trial_date_end and version.trial_date_end != employee.tarco_trial_date_end:
+                version_vals['trial_date_end'] = employee.tarco_trial_date_end
+            gross = tarco_gross(employee)
+            if employee.tarco_gross_wage and version.wage != gross:
+                version_vals['wage'] = gross
+            if version_vals:
+                version.sudo().write(version_vals)
+
+    @api.onchange('tarco_hire_date')
+    def _onchange_tarco_hire_date(self):
+        if self.tarco_hire_date and not self.tarco_trial_manual:
+            self.tarco_trial_date_end = self.tarco_hire_date + timedelta(days=89)
+        if self.tarco_hire_date and not self.tarco_renewal_manual:
+            self.tarco_renewal_date = self.tarco_hire_date + relativedelta(years=1)
+
+    @api.onchange('tarco_trial_date_end')
+    def _onchange_tarco_trial(self):
+        if self.tarco_hire_date and self.tarco_trial_date_end:
+            expected = self.tarco_hire_date + timedelta(days=89)
+            self.tarco_trial_manual = self.tarco_trial_date_end != expected
+
+    @api.constrains('employee_code')
+    def _check_employee_code(self):
+        for employee in self:
+            if not employee.employee_code:
+                continue
+            duplicate = self.sudo().search([
+                ('employee_code', '=', employee.employee_code),
+                ('id', '!=', employee.id),
+            ], limit=1)
+            if duplicate:
+                raise ValidationError(_('Employee code %s is already used.') % employee.employee_code)
+
+    def action_tarco_resign(self):
+        today = fields.Date.context_today(self)
+        self.write({'tarco_resignation_date': today, 'departure_date': today})
+
+    def action_tarco_rehire(self):
+        today = fields.Date.context_today(self)
+        self.write({
+            'active': True,
+            'tarco_rehire_date': today,
+            'tarco_resignation_date': False,
+            'departure_date': False,
+            'departure_reason_id': False,
+            'tarco_trial_manual': False,
+            'tarco_renewal_manual': False,
+            'tarco_trial_date_end': today + timedelta(days=89),
+            'tarco_renewal_date': today + relativedelta(years=1),
+            'tarco_probation_alerted': False,
+            'tarco_renewal_alerted': False,
+        })
+
+    def action_tarco_renew(self):
+        for employee in self:
+            base = employee.tarco_renewal_date or fields.Date.context_today(self)
+            employee.write({
+                'tarco_renewal_date': base + relativedelta(years=1),
+                'tarco_renewal_manual': True,
+                'tarco_renewal_alerted': False,
+            })
+
+    def action_tarco_apply_leave_scheme(self):
+        annual = self.env.ref('tarco_hris.leave_type_annual', raise_if_not_found=False)
+        casual = self.env.ref('tarco_hris.leave_type_casual', raise_if_not_found=False)
+        if not annual or not casual:
+            raise UserError(_('Tarco leave types are missing. Update the module.'))
+        year = fields.Date.context_today(self).year
+        start = fields.Date.from_string('%s-01-01' % year)
+        end = fields.Date.from_string('%s-12-31' % year)
+        for employee in self:
+            self._tarco_allocate(employee, casual, employee.tarco_casual_days, start, end)
+            self._tarco_allocate(employee, annual, employee.tarco_regular_days, start, end)
+        return True
+
+    def _tarco_allocate(self, employee, leave_type, days, start, end):
+        if not days:
+            return False
+        existing = self.env['hr.leave.allocation'].sudo().search([
+            ('employee_id', '=', employee.id),
+            ('holiday_status_id', '=', leave_type.id),
+            ('state', '!=', 'refuse'),
+            ('date_from', '>=', start),
+            ('date_from', '<=', end),
+        ], limit=1)
+        if existing:
+            return existing
+        allocation = self.env['hr.leave.allocation'].sudo().create({
+            'name': '%s %s' % (leave_type.name, start.year),
+            'employee_id': employee.id,
+            'holiday_status_id': leave_type.id,
+            'number_of_days': days,
+            'date_from': start,
+            'date_to': end,
+            'allocation_type': 'regular',
+        })
+        allocation._action_validate()
+        return allocation
+
+    def action_tarco_post_statutory(self):
+        today = fields.Date.context_today(self)
+        month_start = today.replace(day=1)
+        for employee in self:
+            gross = tarco_gross(employee)
+            if employee.tarco_subject_to_tax and employee.tarco_tax_rate and gross:
+                tarco_post_adjustment(
+                    self.env, employee, False, gross * employee.tarco_tax_rate / 100.0,
+                    _('Income tax %s') % employee.display_name, month_start,
+                )
+            if employee.tarco_subject_to_insurance and employee.tarco_insurance_rate and gross:
+                tarco_post_adjustment(
+                    self.env, employee, False, gross * employee.tarco_insurance_rate / 100.0,
+                    _('Social insurance %s') % employee.display_name, month_start,
+                )
+        return True
+
+    def action_tarco_onboarding(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Onboarding Notice'),
+            'res_model': 'tarco.hr.onboarding',
+            'view_mode': 'form',
+            'context': {'default_employee_id': self.id},
+        }
+
+    def action_tarco_open_documents(self):
+        return self._tarco_open('tarco.hr.document', [('employee_id', 'in', self.ids)])
+
+    def action_tarco_open_missions(self):
+        lines = self.env['tarco.hr.mission.line'].search([('employee_id', 'in', self.ids)])
+        return self._tarco_open('tarco.hr.mission', [('id', 'in', lines.mission_id.ids)])
+
+    def action_tarco_open_penalties(self):
+        lines = self.env['tarco.hr.penalty.line'].search([('employee_id', 'in', self.ids)])
+        return self._tarco_open('tarco.hr.penalty', [('id', 'in', lines.penalty_id.ids)])
+
+    def action_tarco_open_rewards(self):
+        return self._tarco_open('tarco.hr.reward', [('employee_id', 'in', self.ids)])
+
+    def action_tarco_open_advances(self):
+        return self._tarco_open('tarco.hr.advance', [('employee_id', 'in', self.ids)])
+
+    def action_tarco_open_kpi(self):
+        return self._tarco_open('tarco.hr.kpi.review', [('employee_id', 'in', self.ids)])
+
+    def _tarco_open(self, model, domain):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.display_name if len(self) == 1 else _('Employees'),
+            'res_model': model,
+            'view_mode': 'list,form',
+            'domain': domain,
+            'context': {'default_employee_id': self.id if len(self) == 1 else False},
+        }
+
+    def action_tarco_employee_report(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Employee File Report'),
+            'res_model': 'tarco.hr.employee.report.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_employee_id': self.id},
+        }
+
+    @api.model
+    def _cron_tarco_contract_alerts(self):
+        today = fields.Date.context_today(self)
+        limit = today + timedelta(days=10)
+        employees = self.sudo().search([
+            ('active', '=', True),
+            ('tarco_resignation_date', '=', False),
+            '|',
+            '&', ('tarco_trial_date_end', '>=', today), ('tarco_trial_date_end', '<=', limit),
+            '&', ('tarco_renewal_date', '>=', today), ('tarco_renewal_date', '<=', limit),
+        ])
+        for employee in employees:
+            employee._tarco_alert_date(
+                employee.tarco_trial_date_end,
+                'tarco_probation_alerted',
+                _('Probation ends on %s') % employee.tarco_trial_date_end,
+            )
+            employee._tarco_alert_date(
+                employee.tarco_renewal_date,
+                'tarco_renewal_alerted',
+                _('Contract renewal is due on %s') % employee.tarco_renewal_date,
+            )
+
+    def _tarco_alert_date(self, due, flag, summary):
+        self.ensure_one()
+        today = fields.Date.context_today(self)
+        if not due or getattr(self, flag) or not (today <= due <= today + timedelta(days=10)):
+            return
+        user = self.version_id.hr_responsible_id or self.parent_id.user_id or self.env.ref('base.user_admin')
+        self.activity_schedule(
+            'mail.mail_activity_data_todo',
+            date_deadline=due,
+            summary=summary,
+            note=_('Alert raised within 10 days of the date for %s.') % self.display_name,
+            user_id=user.id,
+        )
+        emails = {
+            address for address in (self.work_email, self.parent_id.work_email, user.email) if address
+        }
+        if emails:
+            self.env['mail.mail'].sudo().create({
+                'subject': summary,
+                'email_to': ','.join(emails),
+                'body_html': '<p>%s</p><p>%s</p>' % (summary, self.display_name),
+            }).send()
+        self.sudo().write({flag: True})
+
+    def tarco_daily_wage(self):
+        self.ensure_one()
+        return tarco_daily_wage(self)

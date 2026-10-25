@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_employee_file" model="ir.actions.report">
+        <field name="name">Employee File</field>
+        <field name="model">tarco.hr.employee.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">tarco_hris.report_employee_file</field>
+        <field name="report_file">tarco_hris.report_employee_file</field>
+        <field name="print_report_name">'Employee File - %s' % (object.employee_id.name)</field>
+    </record>
+    <record id="action_report_period" model="ir.actions.report">
+        <field name="name">Tarco HR Report</field>
+        <field name="model">tarco.hr.period.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">tarco_hris.report_tarco_period</field>
+        <field name="report_file">tarco_hris.report_tarco_period</field>
+        <field name="print_report_name">'Tarco HR - %s' % (object.report_type)</field>
+    </record>
+
+    <template id="report_employee_file">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="emp" t-value="o.employee_id"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Employee file / ملف الموظف</h2>
+                        <h3><t t-out="emp.employee_code or ''"/> <t t-out="emp.name"/></h3>
+                        <table class="table table-sm" t-if="o.show_personal">
+                            <tr><td>Birthday</td><td><t t-out="emp.birthday or ''"/></td></tr>
+                            <tr><td>Phone</td><td><t t-out="emp.private_phone or ''"/> / <t t-out="emp.emergency_phone or ''"/></td></tr>
+                            <tr><td>Email</td><td><t t-out="emp.private_email or emp.work_email or ''"/></td></tr>
+                            <tr><td>Address</td><td><t t-out="emp.tarco_state_id.name or ''"/> / <t t-out="emp.tarco_city or ''"/> / <t t-out="emp.tarco_district or ''"/> / <t t-out="emp.tarco_square or ''"/></td></tr>
+                            <tr><td>Qualification</td><td><t t-out="emp.certificate or ''"/></td></tr>
+                            <tr><td>Marital status</td><td><t t-out="emp.marital or ''"/></td></tr>
+                            <tr><td>Experience</td><td><t t-out="emp.tarco_experience_years"/></td></tr>
+                            <tr><td>Religion</td><td><t t-out="emp.tarco_religion or ''"/></td></tr>
+                            <tr><td>Nationality</td><td><t t-out="emp.country_id.name or ''"/></td></tr>
+                            <tr><td>Gender</td><td><t t-out="emp.sex or ''"/></td></tr>
+                        </table>
+                        <table class="table table-sm" t-if="o.show_job">
+                            <tr><td>Department</td><td><t t-out="emp.department_id.name or ''"/></td></tr>
+                            <tr><td>Section</td><td><t t-out="emp.section_id.name or ''"/></td></tr>
+                            <tr><td>Job</td><td><t t-out="emp.job_id.name or ''"/></td></tr>
+                        </table>
+                        <table class="table table-sm" t-if="o.show_contract">
+                            <tr><td>Hire date</td><td><t t-out="emp.tarco_hire_date or ''"/></td></tr>
+                            <tr><td>Probation end</td><td><t t-out="emp.tarco_trial_date_end or ''"/></td></tr>
+                            <tr><td>Renewal</td><td><t t-out="emp.tarco_renewal_date or ''"/></td></tr>
+                            <tr><td>Resignation</td><td><t t-out="emp.tarco_resignation_date or ''"/></td></tr>
+                            <tr><td>Rehire</td><td><t t-out="emp.tarco_rehire_date or ''"/></td></tr>
+                            <tr><td>Service</td><td><t t-out="emp.tarco_service_display or ''"/></td></tr>
+                        </table>
+                        <table class="table table-sm" t-if="o.show_salary">
+                            <tr><td>Basic</td><td><t t-out="'%.2f' % (emp.tarco_basic_wage or 0.0)"/></td></tr>
+                            <tr><td>Cost of living</td><td><t t-out="'%.2f' % (emp.tarco_cola or 0.0)"/></td></tr>
+                            <tr><td>Transport</td><td><t t-out="'%.2f' % (emp.tarco_transport_allowance or 0.0)"/></td></tr>
+                            <tr><td>Housing</td><td><t t-out="'%.2f' % (emp.tarco_housing_allowance or 0.0)"/></td></tr>
+                            <tr><td>Other</td><td><t t-out="'%.2f' % (emp.tarco_other_allowance or 0.0)"/></td></tr>
+                            <tr><td>Gross</td><td><t t-out="'%.2f' % (emp.tarco_gross_wage or 0.0)"/></td></tr>
+                        </table>
+                        <t t-if="o.show_documents">
+                            <h4>Documents</h4>
+                            <table class="table table-sm table-bordered">
+                                <tr><th>Group</th><th>Kind</th><th>Received</th><th>Date</th></tr>
+                                <tr t-foreach="emp.tarco_document_ids" t-as="doc">
+                                    <td t-out="doc.group_type"/>
+                                    <td t-out="doc.kind"/>
+                                    <td t-out="doc.received"/>
+                                    <td t-out="doc.document_date or ''"/>
+                                </tr>
+                            </table>
+                        </t>
+                        <p t-if="o.show_leave">Leave scheme <t t-out="emp.tarco_leave_scheme"/>: casual <t t-out="emp.tarco_casual_days"/>, annual <t t-out="emp.tarco_regular_days"/>.</p>
+                        <p t-if="o.show_attendance">Shift <t t-out="emp.tarco_shift_id.name or ''"/>. Overtime mode <t t-out="emp.tarco_overtime_mode"/>.</p>
+                        <p t-if="o.show_penalty">Penalties: <t t-out="emp.tarco_penalty_count"/></p>
+                        <p t-if="o.show_reward">Rewards: <t t-out="emp.tarco_reward_count"/></p>
+                        <p t-if="o.show_advance">Advances: <t t-out="emp.tarco_advance_count"/></p>
+                        <p t-if="o.show_kpi">KPI reviews: <t t-out="emp.tarco_kpi_count"/></p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_tarco_period">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Tarco HRIS</h2>
+                        <p>
+                            <t t-out="o.report_type"/>
+                            — <t t-out="o.date_from"/> to <t t-out="o.date_to"/>
+                        </p>
+                        <div t-out="o.get_report_markup()"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

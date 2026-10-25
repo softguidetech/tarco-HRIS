@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tarco_mission_hr_rule" model="ir.rule">
+        <field name="name">Tarco mission HR</field>
+        <field name="model_id" ref="model_tarco_hr_mission"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_mission_user_rule" model="ir.rule">
+        <field name="name">Tarco mission own or team</field>
+        <field name="model_id" ref="model_tarco_hr_mission"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">['|', '|', ('create_uid', '=', user.id), ('line_ids.employee_id.user_id', '=', user.id), ('line_ids.employee_id.parent_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_mission_line_hr_rule" model="ir.rule">
+        <field name="name">Tarco mission line HR</field>
+        <field name="model_id" ref="model_tarco_hr_mission_line"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_mission_line_user_rule" model="ir.rule">
+        <field name="name">Tarco mission line own or team</field>
+        <field name="model_id" ref="model_tarco_hr_mission_line"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">['|', '|', ('mission_id.create_uid', '=', user.id), ('employee_id.user_id', '=', user.id), ('employee_id.parent_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="tarco_kpi_hr_rule" model="ir.rule">
+        <field name="name">Tarco KPI HR</field>
+        <field name="model_id" ref="model_tarco_hr_kpi_review"/>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="tarco_kpi_user_rule" model="ir.rule">
+        <field name="name">Tarco KPI manager</field>
+        <field name="model_id" ref="model_tarco_hr_kpi_review"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">['|', '|', ('reviewer_user_id', '=', user.id), ('employee_id.user_id', '=', user.id), ('employee_id.parent_id.user_id', '=', user.id)]</field>
+    </record>
+</odoo>

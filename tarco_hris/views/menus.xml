@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_tarco_hris_root" name="Tarco HRIS" parent="hr.menu_hr_root" sequence="5" groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_tarco_employees" name="Employee file" parent="menu_tarco_hris_root" sequence="10"/>
+    <record id="action_tarco_employees" model="ir.actions.act_window">
+        <field name="name">Employees</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_employee_files" name="Employees" parent="menu_tarco_employees" action="action_tarco_employees" sequence="10"/>
+    <record id="action_tarco_onboarding" model="ir.actions.act_window">
+        <field name="name">Onboarding notices</field>
+        <field name="res_model">tarco.hr.onboarding</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_onboarding" name="Onboarding notices" parent="menu_tarco_employees" action="action_tarco_onboarding" sequence="20"/>
+
+    <menuitem id="menu_tarco_contracts" name="Contracts" parent="menu_tarco_hris_root" sequence="20"/>
+    <record id="action_tarco_contracts" model="ir.actions.act_window">
+        <field name="name">Employment contracts</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_employee_contract_list"/>
+        <field name="search_view_id" ref="hr.view_employee_filter"/>
+    </record>
+    <menuitem id="menu_tarco_contract_list" name="Contracts" parent="menu_tarco_contracts" action="action_tarco_contracts" sequence="10"/>
+    <record id="action_tarco_probation" model="ir.actions.act_window">
+        <field name="name">Probation ending</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_employee_contract_list"/>
+        <field name="context">{'search_default_probation_due': 1}</field>
+    </record>
+    <menuitem id="menu_tarco_probation" name="Probation ending" parent="menu_tarco_contracts" action="action_tarco_probation" sequence="20"/>
+    <record id="action_tarco_renewal" model="ir.actions.act_window">
+        <field name="name">Renewals due</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_employee_contract_list"/>
+        <field name="context">{'search_default_renewal_due': 1}</field>
+    </record>
+    <menuitem id="menu_tarco_renewal" name="Renewals due" parent="menu_tarco_contracts" action="action_tarco_renewal" sequence="30"/>
+
+    <menuitem id="menu_tarco_attendance" name="Attendance" parent="menu_tarco_hris_root" sequence="30"/>
+    <record id="action_tarco_shifts" model="ir.actions.act_window">
+        <field name="name">Shifts</field>
+        <field name="res_model">tarco.hr.shift</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_shifts" name="Shifts" parent="menu_tarco_attendance" action="action_tarco_shifts" sequence="10"/>
+    <record id="action_tarco_attendance_days" model="ir.actions.act_window">
+        <field name="name">Daily attendance</field>
+        <field name="res_model">tarco.hr.attendance.day</field>
+        <field name="view_mode">list</field>
+    </record>
+    <menuitem id="menu_tarco_attendance_days" name="Daily attendance" parent="menu_tarco_attendance" action="action_tarco_attendance_days" sequence="20"/>
+
+    <menuitem id="menu_tarco_leave" name="Leave" parent="menu_tarco_hris_root" sequence="40"/>
+    <record id="action_tarco_leave" model="ir.actions.act_window">
+        <field name="name">Leave requests</field>
+        <field name="res_model">hr.leave</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_leave_requests" name="Leave requests" parent="menu_tarco_leave" action="action_tarco_leave" sequence="10"/>
+    <record id="action_tarco_holidays" model="ir.actions.act_window">
+        <field name="name">Official holidays</field>
+        <field name="res_model">tarco.hr.public.holiday</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_holidays" name="Official holidays" parent="menu_tarco_leave" action="action_tarco_holidays" sequence="20"/>
+    <record id="action_tarco_encashment" model="ir.actions.act_window">
+        <field name="name">Leave encashment</field>
+        <field name="res_model">tarco.hr.leave.encashment</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_encashment" name="Leave encashment" parent="menu_tarco_leave" action="action_tarco_encashment" sequence="30"/>
+
+    <record id="action_tarco_missions" model="ir.actions.act_window">
+        <field name="name">Missions</field>
+        <field name="res_model">tarco.hr.mission</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_missions" name="Missions" parent="menu_tarco_hris_root" action="action_tarco_missions" sequence="50" groups="base.group_user"/>
+
+    <record id="action_tarco_overtime" model="ir.actions.act_window">
+        <field name="name">Overtime</field>
+        <field name="res_model">tarco.hr.overtime</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_overtime" name="Overtime" parent="menu_tarco_hris_root" action="action_tarco_overtime" sequence="60"/>
+
+    <menuitem id="menu_tarco_discipline" name="Penalties and rewards" parent="menu_tarco_hris_root" sequence="70"/>
+    <record id="action_tarco_penalty_rules" model="ir.actions.act_window">
+        <field name="name">Penalty rules</field>
+        <field name="res_model">tarco.hr.penalty.rule</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_penalty_rules" name="Penalty rules" parent="menu_tarco_discipline" action="action_tarco_penalty_rules" sequence="10"/>
+    <record id="action_tarco_penalties" model="ir.actions.act_window">
+        <field name="name">Penalties</field>
+        <field name="res_model">tarco.hr.penalty</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_penalties" name="Penalties" parent="menu_tarco_discipline" action="action_tarco_penalties" sequence="20"/>
+    <record id="action_tarco_penalty_generate" model="ir.actions.act_window">
+        <field name="name">Generate from attendance</field>
+        <field name="res_model">tarco.hr.penalty.generate.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <menuitem id="menu_tarco_penalty_generate" name="Generate from attendance" parent="menu_tarco_discipline" action="action_tarco_penalty_generate" sequence="30"/>
+    <record id="action_tarco_rewards" model="ir.actions.act_window">
+        <field name="name">Rewards</field>
+        <field name="res_model">tarco.hr.reward</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_rewards" name="Rewards" parent="menu_tarco_discipline" action="action_tarco_rewards" sequence="40"/>
+
+    <record id="action_tarco_advances" model="ir.actions.act_window">
+        <field name="name">Advances and loans</field>
+        <field name="res_model">tarco.hr.advance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_advances" name="Advances and loans" parent="menu_tarco_hris_root" action="action_tarco_advances" sequence="80"/>
+
+    <menuitem id="menu_tarco_recruitment" name="Recruitment" parent="menu_tarco_hris_root" sequence="90"/>
+    <menuitem id="menu_tarco_jobs" name="Job positions" parent="menu_tarco_recruitment" action="hr_recruitment.action_hr_job" sequence="10"/>
+    <record id="action_tarco_applicants" model="ir.actions.act_window">
+        <field name="name">Applicants</field>
+        <field name="res_model">hr.applicant</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="context">{'search_default_shortlisted': 0}</field>
+    </record>
+    <menuitem id="menu_tarco_applicants" name="Applicants" parent="menu_tarco_recruitment" action="action_tarco_applicants" sequence="20"/>
+
+    <menuitem id="menu_tarco_kpi" name="KPIs" parent="menu_tarco_hris_root" sequence="100" groups="base.group_user"/>
+    <record id="action_tarco_kpi_templates" model="ir.actions.act_window">
+        <field name="name">KPI questions</field>
+        <field name="res_model">tarco.hr.kpi.template</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_kpi_templates" name="Question templates" parent="menu_tarco_kpi" action="action_tarco_kpi_templates" sequence="10" groups="hr.group_hr_user"/>
+    <record id="action_tarco_kpi_reviews" model="ir.actions.act_window">
+        <field name="name">KPI reviews</field>
+        <field name="res_model">tarco.hr.kpi.review</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tarco_kpi_reviews" name="Reviews" parent="menu_tarco_kpi" action="action_tarco_kpi_reviews" sequence="20" groups="base.group_user"/>
+
+    <menuitem id="menu_tarco_reports" name="Reports" parent="menu_tarco_hris_root" sequence="110"/>
+    <record id="action_tarco_period_report" model="ir.actions.act_window">
+        <field name="name">HR reports</field>
+        <field name="res_model">tarco.hr.period.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <menuitem id="menu_tarco_period_report" name="Period reports" parent="menu_tarco_reports" action="action_tarco_period_report" sequence="10"/>
+    <record id="action_tarco_employee_report" model="ir.actions.act_window">
+        <field name="name">Employee file report</field>
+        <field name="res_model">tarco.hr.employee.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <menuitem id="menu_tarco_employee_report" name="Employee file report" parent="menu_tarco_reports" action="action_tarco_employee_report" sequence="20"/>
+
+    <record id="action_tarco_ensure_rules" model="ir.actions.server">
+        <field name="name">Create Tarco payroll rules</field>
+        <field name="model_id" ref="hr_payroll.model_hr_salary_rule"/>
+        <field name="state">code</field>
+        <field name="code">action = model._tarco_ensure_rules()</field>
+    </record>
+    <menuitem id="menu_tarco_ensure_rules" name="Create payroll rules" parent="menu_tarco_reports" action="action_tarco_ensure_rules" sequence="90" groups="hr.group_hr_manager"/>
+</odoo>

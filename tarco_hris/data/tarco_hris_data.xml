@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="input_tarco_earning" model="hr.payslip.input.type">
+            <field name="name">Tarco Earning</field>
+            <field name="code">TARCO_EARNING</field>
+            <field name="country_id" eval="False"/>
+            <field name="available_in_attachments" eval="True"/>
+        </record>
+        <record id="input_tarco_deduction" model="hr.payslip.input.type">
+            <field name="name">Tarco Deduction</field>
+            <field name="code">TARCO_DEDUCTION</field>
+            <field name="country_id" eval="False"/>
+            <field name="available_in_attachments" eval="True"/>
+        </record>
+
+        <record id="leave_type_annual" model="hr.leave.type">
+            <field name="name">Annual Leave / اعتيادي</field>
+            <field name="tarco_kind">annual</field>
+            <field name="requires_allocation" eval="True"/>
+            <field name="employee_requests" eval="False"/>
+            <field name="leave_validation_type">both</field>
+            <field name="allocation_validation_type">no_validation</field>
+            <field name="request_unit">day</field>
+        </record>
+        <record id="leave_type_casual" model="hr.leave.type">
+            <field name="name">Casual Leave / عارضة</field>
+            <field name="tarco_kind">casual</field>
+            <field name="requires_allocation" eval="True"/>
+            <field name="employee_requests" eval="False"/>
+            <field name="leave_validation_type">both</field>
+            <field name="allocation_validation_type">no_validation</field>
+            <field name="request_unit">day</field>
+        </record>
+        <record id="leave_type_sick" model="hr.leave.type">
+            <field name="name">Sick Leave / مرضية</field>
+            <field name="tarco_kind">sick</field>
+            <field name="requires_allocation" eval="False"/>
+            <field name="support_document" eval="True"/>
+            <field name="leave_validation_type">hr</field>
+            <field name="request_unit">day</field>
+            <field name="unpaid" eval="False"/>
+        </record>
+        <record id="leave_type_official" model="hr.leave.type">
+            <field name="name">Official Holiday Leave / رسمية</field>
+            <field name="tarco_kind">official</field>
+            <field name="requires_allocation" eval="False"/>
+            <field name="leave_validation_type">hr</field>
+            <field name="request_unit">day</field>
+        </record>
+    </data>
+
+    <data noupdate="1">
+        <record id="seq_tarco_onboarding" model="ir.sequence">
+            <field name="name">Tarco Onboarding</field>
+            <field name="code">tarco.hr.onboarding</field>
+            <field name="prefix">ONB/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_tarco_mission" model="ir.sequence">
+            <field name="name">Tarco Mission</field>
+            <field name="code">tarco.hr.mission</field>
+            <field name="prefix">MIS/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_tarco_overtime" model="ir.sequence">
+            <field name="name">Tarco Overtime</field>
+            <field name="code">tarco.hr.overtime</field>
+            <field name="prefix">OT/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_tarco_penalty" model="ir.sequence">
+            <field name="name">Tarco Penalty</field>
+            <field name="code">tarco.hr.penalty</field>
+            <field name="prefix">PEN/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_tarco_reward" model="ir.sequence">
+            <field name="name">Tarco Reward</field>
+            <field name="code">tarco.hr.reward</field>
+            <field name="prefix">REW/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_tarco_advance" model="ir.sequence">
+            <field name="name">Tarco Advance</field>
+            <field name="code">tarco.hr.advance</field>
+            <field name="prefix">ADV/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_tarco_encashment" model="ir.sequence">
+            <field name="name">Tarco Leave Encashment</field>
+            <field name="code">tarco.hr.leave.encashment</field>
+            <field name="prefix">ENC/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_tarco_kpi" model="ir.sequence">
+            <field name="name">Tarco KPI</field>
+            <field name="code">tarco.hr.kpi.review</field>
+            <field name="prefix">KPI/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+
+        <record id="shift_day_0800_1600" model="tarco.hr.shift">
+            <field name="name">Day shift 08:00-16:00</field>
+            <field name="hour_from">8</field>
+            <field name="hour_to">16</field>
+            <field name="grace_minutes">15</field>
+            <field name="standard_hours">8</field>
+            <field name="ot_after">16</field>
+            <field name="rest_friday" eval="True"/>
+        </record>
+        <record id="shift_0800_2000" model="tarco.hr.shift">
+            <field name="name">Shift 08:00-20:00</field>
+            <field name="hour_from">8</field>
+            <field name="hour_to">20</field>
+            <field name="grace_minutes">15</field>
+            <field name="standard_hours">8</field>
+            <field name="ot_after">16</field>
+            <field name="rest_friday" eval="True"/>
+        </record>
+
+        <record id="penalty_rule_late" model="tarco.hr.penalty.rule">
+            <field name="name">Lateness</field>
+            <field name="code">LATE</field>
+            <field name="category">late</field>
+            <field name="calculation">hours</field>
+            <field name="auto_from_attendance" eval="True"/>
+            <field name="reason_text">جزاء تأخير وفقاً لقانون العمل لسنة 1997. Lateness penalty under Labour Law 1997.</field>
+        </record>
+        <record id="penalty_rule_absence" model="tarco.hr.penalty.rule">
+            <field name="name">Absence</field>
+            <field name="code">ABSENCE</field>
+            <field name="category">absence</field>
+            <field name="calculation">days</field>
+            <field name="default_days">1</field>
+            <field name="auto_from_attendance" eval="True"/>
+            <field name="reason_text">جزاء غياب وفقاً لقانون العمل لسنة 1997. Absence penalty under Labour Law 1997.</field>
+        </record>
+        <record id="penalty_rule_conduct" model="tarco.hr.penalty.rule">
+            <field name="name">Conduct</field>
+            <field name="code">CONDUCT</field>
+            <field name="category">conduct</field>
+            <field name="calculation">fixed</field>
+            <field name="reason_text">جزاء مخالفة وفقاً لقانون العمل لسنة 1997. Conduct penalty under Labour Law 1997. Edit this text to the article HR applies.</field>
+        </record>
+
+        <record id="ir_cron_tarco_hris_daily" model="ir.cron">
+            <field name="name">Tarco HRIS: attendance and contract alerts</field>
+            <field name="model_id" ref="model_tarco_hr_attendance_day"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_tarco_daily()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="mail_template_tarco_interview" model="mail.template">
+            <field name="name">Tarco interview invitation</field>
+            <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+            <field name="subject">Interview invitation - {{ object.job_id.name or '' }}</field>
+            <field name="email_from">{{ object.company_id.email or user.email or '' }}</field>
+            <field name="email_to">{{ object.email_from or '' }}</field>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Dear <t t-out="object.partner_name or ''"/>,</p>
+                    <p>
+                        You are invited to an interview for
+                        <t t-out="object.job_id.name or ''"/>
+                        on <t t-out="object.tarco_interview_datetime or ''"/>.
+                    </p>
+                    <p>Tarco Aviation Services - Human Resources</p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

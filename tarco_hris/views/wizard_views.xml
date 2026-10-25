@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tarco_employee_report_wizard" model="ir.ui.view">
+        <field name="name">tarco.hr.employee.report.wizard.form</field>
+        <field name="model">tarco.hr.employee.report.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="employee_id"/>
+                    <field name="show_personal"/>
+                    <field name="show_job"/>
+                    <field name="show_salary"/>
+                    <field name="show_documents"/>
+                    <field name="show_contract"/>
+                    <field name="show_leave"/>
+                    <field name="show_attendance"/>
+                    <field name="show_penalty"/>
+                    <field name="show_reward"/>
+                    <field name="show_advance"/>
+                    <field name="show_kpi"/>
+                </group>
+                <footer>
+                    <button name="action_print" type="object" string="Print" class="btn-primary"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tarco_period_report_wizard" model="ir.ui.view">
+        <field name="name">tarco.hr.period.report.wizard.form</field>
+        <field name="model">tarco.hr.period.report.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="report_type"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="department_id"/>
+                    <field name="employee_id"/>
+                </group>
+                <footer>
+                    <button name="action_print" type="object" string="Print" class="btn-primary"/>
+                    <button name="action_export_xlsx" type="object" string="Export Excel"/>
+                    <button name="action_sync_attendance" type="object" string="Sync fingerprint" invisible="report_type != 'attendance'"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tarco_penalty_generate_wizard" model="ir.ui.view">
+        <field name="name">tarco.hr.penalty.generate.wizard.form</field>
+        <field name="model">tarco.hr.penalty.generate.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="department_id"/>
+                    <field name="include_late"/>
+                    <field name="include_absence"/>
+                </group>
+                <footer>
+                    <button name="action_generate" type="object" string="Generate" class="btn-primary"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
