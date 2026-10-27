@@ -34,7 +34,7 @@ class TarcoHrMission(models.Model):
         compute='_compute_cost_company_currency', store=True, currency_field='company_currency_id',
         string='Total cost in company currency',
         help='Total cost converted at the rate of the mission start date. Used to add up missions in reports.')
-    line_ids = fields.One2many('tarco.hr.mission.line', 'mission_id', string='Employees')
+    line_ids = fields.One2many('tarco.hr.mission.line', 'mission_id', string='Employee lines')
     employee_ids = fields.Many2many(
         'hr.employee', compute='_compute_employee_ids', search='_search_employee_ids',
         string='Employees')
