@@ -102,6 +102,7 @@
             <field name="name">Laptop / Computer</field>
             <field name="code">computer</field>
             <field name="sequence">10</field>
+            <field name="give_default" eval="True"/>
         </record>
         <record id="asset_type_mobile" model="tarco.hr.asset.type">
             <field name="name">Mobile phone</field>

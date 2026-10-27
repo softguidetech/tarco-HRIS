@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.26'
+VERSION = 'Module version 19.0.1.0.27'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -599,10 +599,13 @@ def build_story():
     s.append(tip('An employee must be linked on the user form (%s). The dashboard uses that link to hide other records.'
                  % menu('Settings > Users & Companies > Users')))
     s.append(section('1.5 What is new in this edition'))
-    s.append(p('This guide matches <b>Tarco HRIS 19.0.1.0.26</b>. Upgrade the module on Odoo.sh, then use the menus below.'))
+    s.append(p('This guide matches <b>Tarco HRIS 19.0.1.0.27</b>. Upgrade the module on Odoo.sh, then use the menus below.'))
     s.append(table(['Version', 'What was added'], [
+        ['19.0.1.0.27',
+         'Custody types are configurable. Add, rename or archive types in Configuration > Custody types '
+         '(headset, keys, tools, or any item). Give custody lists those types instead of four fixed ticks.'],
         ['19.0.1.0.26',
-         'Give custody in one step (tick laptop, phone, uniform, badge). Saving a line issues it at once. '
+         'Give custody in one step. Saving a line issues it at once. '
          'Resignation or dismissal automatically returns every issued item. No per-item return before exit.'],
         ['19.0.1.0.25',
          'Organization chart and department hierarchy open as the full pyramid. Every manager and department is shown; you do not click "N people" to go into each branch.'],
@@ -639,7 +642,9 @@ def build_story():
         'Set each department\'s <b>Parent Department</b> and <b>Manager</b>, then set <b>Manager</b> on every employee, '
         'so %s and %s show a pyramid, not a flat list.'
         % (menu('Employee file > Organization chart'), menu('Employee file > Departments')),
-        'Review custody types in %s (laptop, mobile, uniform, badge, other).'
+        'Review custody types in %s. The four starters (laptop, mobile, uniform, badge) can be renamed. '
+        'Click New to add any other item (headset, keys, SIM, tools). Tick <b>Tick by default</b> on types that '
+        'should already be marked when HR opens Give custody.'
         % menu('Tarco HRIS > Configuration > Custody types'),
         'Complete every employee file (next chapter), then select the employees and click <b>Apply leave scheme</b> '
         'on the list (or Actions) to give the year\'s leave balance.',
@@ -788,13 +793,17 @@ def build_story():
         'That marks the requirement done and creates an issued custody record.',
     ]))
     s.append(section('3.10 Employee custody'))
-    s.append(p('Custody is the company property given to the employee after hiring: laptop, mobile, uniform or badge. '
-               'Giving an item is one step. Returning everything happens automatically when the employee resigns or is dismissed.'))
+    s.append(p('Custody is company property given to the employee after hiring. Types are not fixed: HR adds them in '
+               '%s. Laptop, phone, uniform and badge are created for you; add headset, keys, tools or any other item. '
+               'Giving is one step. Returning everything happens automatically when the employee resigns or is dismissed.'
+               % menu('Tarco HRIS > Configuration > Custody types')))
     s.append(steps([
         'On the employee click <b>Give custody</b> (header or HR File), or open %s.'
         % menu('Tarco HRIS > Employee file > Give custody'),
-        'Tick Laptop, Mobile, Uniform and/or Badge. Type the serial or phone number if you have it.',
-        'Click <b>Give to employee</b>. The items are issued immediately (today\'s date).',
+        'The wizard lists every active custody type. Tick the ones you are handing over. Type the model, serial or quantity.',
+        'To issue a type that is not in the list, add it first in %s (or create it from the Type column), then reopen Give custody.'
+        % menu('Configuration > Custody types'),
+        'Click <b>Give to employee</b>. The ticked items are issued immediately (today\'s date).',
         'Or add a line on the HR File custody list: type, item, serial — saving the line issues it.',
         'If an item comes back early, click <b>Return</b> on that line. You do not need this at exit.',
     ]))
@@ -803,7 +812,7 @@ def build_story():
         ['Returned', 'Handed back. Set by Return, or automatically on resignation / dismissal.'],
         ['Lost', 'Not returned. Use only if the item will not come back.'],
     ], [3.4, 13.0]))
-    s.append(note('Types are in %s: Laptop / Computer, Mobile phone, Uniform, Badge / ID card, Other.'
+    s.append(note('Name, code and <b>Tick by default</b> are set per type in %s. Archive a type to hide it from Give custody without deleting history.'
                   % menu('Configuration > Custody types')))
     s.append(PageBreak())
 
@@ -1422,6 +1431,7 @@ def build_story():
         ['Organization chart is empty or flat.', 'Set Manager on each employee (HR File) and Parent Department on departments. '
                                                  'Upgrade to 19.0.1.0.25 and open Employee file > Organization chart. The full tree opens expanded.'],
         ['Cannot register resignation.', 'Upgrade to 19.0.1.0.26. Confirm resignation or dismissal once; issued custody is returned automatically.'],
+        ['Give custody still shows four fixed ticks.', 'Upgrade to 19.0.1.0.27. Add or rename types in Configuration > Custody types; Give custody lists every active type.'],
         ['Onboarding sent but no custody.', 'Onboarding only prepares the list. Click Give custody on the employee and tick the items you handed over.'],
         ['Excel report has a white header and no style.', 'Upgrade to 19.0.1.0.23 or later and click Export Excel again. '
                                                           'The new file has a navy title, navy headers, zebra rows and a freeze pane.'],

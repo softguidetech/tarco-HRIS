@@ -8,15 +8,34 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
+                <field name="give_default"/>
                 <field name="note"/>
                 <field name="active" optional="hide"/>
             </list>
         </field>
     </record>
+    <record id="view_tarco_asset_type_form" model="ir.ui.view">
+        <field name="name">tarco.hr.asset.type.form</field>
+        <field name="model">tarco.hr.asset.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="code" placeholder="headset"/>
+                        <field name="sequence"/>
+                        <field name="give_default"/>
+                        <field name="active"/>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
     <record id="action_tarco_asset_types" model="ir.actions.act_window">
         <field name="name">Custody types</field>
         <field name="res_model">tarco.hr.asset.type</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <record id="view_tarco_requirement_form" model="ir.ui.view">
@@ -170,15 +189,12 @@
                 <field name="name"/>
                 <field name="employee_id"/>
                 <field name="employee_code"/>
+                <field name="type_id"/>
                 <field name="serial"/>
                 <field name="description"/>
                 <filter name="issued" string="Issued (outstanding)" domain="[('state', '=', 'issued')]"/>
                 <filter name="returned" string="Returned" domain="[('state', '=', 'returned')]"/>
                 <filter name="lost" string="Lost" domain="[('state', '=', 'lost')]"/>
-                <separator/>
-                <filter name="computer" string="Laptop / Computer" domain="[('type_code', '=', 'computer')]"/>
-                <filter name="mobile" string="Mobile" domain="[('type_code', '=', 'mobile')]"/>
-                <filter name="uniform" string="Uniform" domain="[('type_code', '=', 'uniform')]"/>
                 <group>
                     <filter name="group_type" string="Type" context="{'group_by': 'type_id'}"/>
                     <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
@@ -210,26 +226,19 @@
                     <field name="employee_id"/>
                     <field name="employee_code"/>
                 </group>
-                <group string="Tick what you are handing over">
-                    <group>
-                        <field name="give_computer"/>
-                        <field name="computer_item" invisible="not give_computer"/>
-                        <field name="computer_serial" invisible="not give_computer"/>
-                    </group>
-                    <group>
-                        <field name="give_mobile"/>
-                        <field name="mobile_item" invisible="not give_mobile"/>
-                        <field name="mobile_serial" invisible="not give_mobile"/>
-                    </group>
-                    <group>
-                        <field name="give_uniform"/>
-                        <field name="uniform_qty" invisible="not give_uniform"/>
-                    </group>
-                    <group>
-                        <field name="give_badge"/>
-                        <field name="badge_serial" invisible="not give_badge"/>
-                    </group>
-                </group>
+                <separator string="Tick what you are handing over"/>
+                <p class="text-muted">
+                    Types come from Configuration &gt; Custody types. Add any item there (headset, keys, tools) and it appears here.
+                </p>
+                <field name="line_ids" nolabel="1">
+                    <list editable="bottom">
+                        <field name="give"/>
+                        <field name="type_id"/>
+                        <field name="description"/>
+                        <field name="serial"/>
+                        <field name="quantity"/>
+                    </list>
+                </field>
                 <group>
                     <field name="note" placeholder="Optional note"/>
                 </group>

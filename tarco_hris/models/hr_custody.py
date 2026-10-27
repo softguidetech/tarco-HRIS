@@ -9,16 +9,34 @@ class TarcoHrAssetType(models.Model):
     _order = 'sequence, name'
 
     name = fields.Char(required=True, translate=True)
-    code = fields.Selection([
-        ('computer', 'Laptop / Computer'),
-        ('mobile', 'Mobile phone'),
-        ('uniform', 'Uniform'),
-        ('badge', 'Badge / ID card'),
-        ('other', 'Other'),
-    ], required=True, default='other')
+    code = fields.Char(
+        required=True,
+        help='Short key, for example laptop, phone or headset. You can add any type.',
+    )
     sequence = fields.Integer(default=10)
+    give_default = fields.Boolean(
+        string='Tick by default',
+        help='When giving custody, this type is already ticked.',
+    )
     active = fields.Boolean(default=True)
     note = fields.Char()
+
+    _code_unique = models.Constraint(
+        'unique(code)',
+        'This custody type code is already used.',
+    )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('code'):
+                vals['code'] = vals['code'].strip().lower().replace(' ', '_')
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if vals.get('code'):
+            vals['code'] = vals['code'].strip().lower().replace(' ', '_')
+        return super().write(vals)
 
 
 class TarcoHrRequirement(models.Model):
@@ -94,7 +112,7 @@ class TarcoHrAsset(models.Model):
     department_id = fields.Many2one(related='employee_id.department_id', store=True)
     company_id = fields.Many2one(related='employee_id.company_id', store=True)
     type_id = fields.Many2one('tarco.hr.asset.type', required=True, tracking=True)
-    type_code = fields.Selection(related='type_id.code', store=True)
+    type_code = fields.Char(related='type_id.code', store=True)
     description = fields.Char(string='Item', tracking=True)
     serial = fields.Char(string='Serial / tag', tracking=True)
     quantity = fields.Integer(default=1)
@@ -133,7 +151,7 @@ class TarcoHrAsset(models.Model):
         asset_type = self.env['tarco.hr.asset.type'].search([('code', '=', code)], limit=1)
         if not asset_type:
             asset_type = self.env['tarco.hr.asset.type'].create({
-                'name': dict(self.env['tarco.hr.asset.type']._fields['code'].selection).get(code, code),
+                'name': code.replace('_', ' ').title(),
                 'code': code,
             })
         return asset_type
@@ -208,39 +226,42 @@ class TarcoHrIssueWizard(models.TransientModel):
 
     employee_id = fields.Many2one('hr.employee', required=True)
     employee_code = fields.Char(related='employee_id.employee_code')
-    give_computer = fields.Boolean(string='Laptop / Computer', default=True)
-    computer_item = fields.Char(string='Laptop model', default='Laptop')
-    computer_serial = fields.Char(string='Laptop serial')
-    give_mobile = fields.Boolean(string='Mobile phone')
-    mobile_item = fields.Char(string='Phone model', default='Mobile phone')
-    mobile_serial = fields.Char(string='Phone serial / number')
-    give_uniform = fields.Boolean(string='Uniform')
-    uniform_qty = fields.Integer(string='Uniform pieces', default=1)
-    give_badge = fields.Boolean(string='Badge / ID card')
-    badge_serial = fields.Char(string='Badge number')
+    line_ids = fields.One2many('tarco.hr.issue.line', 'wizard_id')
     note = fields.Char()
+
+    @api.model
+    def default_get(self, fields_list):
+        values = super().default_get(fields_list)
+        types = self.env['tarco.hr.asset.type'].search([])
+        any_default = any(asset_type.give_default for asset_type in types)
+        values['line_ids'] = [
+            (0, 0, {
+                'type_id': asset_type.id,
+                'give': bool(
+                    asset_type.give_default
+                    or (not any_default and asset_type.code == 'computer')
+                ),
+                'description': asset_type.name,
+                'quantity': 1,
+            })
+            for asset_type in types
+        ]
+        return values
 
     def action_give(self):
         self.ensure_one()
-        if not any((self.give_computer, self.give_mobile, self.give_uniform, self.give_badge)):
-            raise UserError(_('Tick at least one item to give to the employee.'))
+        lines = self.line_ids.filtered('give')
+        if not lines:
+            raise UserError(_('Tick at least one custody type, or add a type in Configuration > Custody types.'))
         Asset = self.env['tarco.hr.asset']
         created = Asset.browse()
-        specs = [
-            (self.give_computer, 'computer', self.computer_item or _('Laptop'), self.computer_serial, 1),
-            (self.give_mobile, 'mobile', self.mobile_item or _('Mobile phone'), self.mobile_serial, 1),
-            (self.give_uniform, 'uniform', _('Uniform'), False, self.uniform_qty or 1),
-            (self.give_badge, 'badge', _('Badge / ID card'), self.badge_serial, 1),
-        ]
-        for give, kind, item, serial, qty in specs:
-            if not give:
-                continue
+        for line in lines:
             created |= Asset.create({
                 'employee_id': self.employee_id.id,
-                'type_id': Asset._type_for_kind(kind).id,
-                'description': item,
-                'serial': serial or False,
-                'quantity': max(qty, 1),
+                'type_id': line.type_id.id,
+                'description': line.description or line.type_id.name,
+                'serial': line.serial or False,
+                'quantity': max(line.quantity or 1, 1),
                 'note': self.note or '',
                 'state': 'issued',
             })
@@ -251,11 +272,28 @@ class TarcoHrIssueWizard(models.TransientModel):
                 'type': 'success',
                 'message': _('Given to %s: %s') % (
                     self.employee_id.name,
-                    ', '.join(created.mapped('description')),
+                    ', '.join(created.mapped(lambda rec: rec.description or rec.type_id.name)),
                 ),
                 'next': {'type': 'ir.actions.act_window_close'},
             },
         }
+
+
+class TarcoHrIssueLine(models.TransientModel):
+    _name = 'tarco.hr.issue.line'
+    _description = 'Give Custody Line'
+
+    wizard_id = fields.Many2one('tarco.hr.issue.wizard', required=True, ondelete='cascade')
+    give = fields.Boolean(string='Give')
+    type_id = fields.Many2one('tarco.hr.asset.type', required=True, string='Type')
+    description = fields.Char(string='Item / model')
+    serial = fields.Char(string='Serial / tag')
+    quantity = fields.Integer(default=1)
+
+    @api.onchange('type_id')
+    def _onchange_type_id(self):
+        if self.type_id and not self.description:
+            self.description = self.type_id.name
 
 
 class TarcoHrExitWizard(models.TransientModel):
