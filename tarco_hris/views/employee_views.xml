@@ -175,6 +175,9 @@
                                 <field name="state" readonly="1"/>
                                 <button name="action_return" type="object" string="Return" icon="fa-undo"
                                         invisible="state != 'issued'"/>
+                                <button name="action_lost" type="object" string="Lost" icon="fa-times-circle"
+                                        invisible="state != 'issued'"
+                                        confirm="Mark this item as lost? It will not be expected back at end of service."/>
                             </list>
                         </field>
                     </group>

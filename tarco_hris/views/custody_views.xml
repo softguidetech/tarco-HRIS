@@ -127,7 +127,7 @@
                             confirm="Mark this item as lost? It will not be expected back at end of service."/>
                     <button name="action_draft" type="object" string="Reset to draft" invisible="state not in ('returned', 'lost', 'cancel')"/>
                     <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft', 'returned', 'lost')"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,issued,returned"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,issued,returned,lost"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -178,6 +178,9 @@
                 <field name="return_date" optional="show"/>
                 <field name="state" optional="show"/>
                 <button name="action_return" type="object" string="Return" icon="fa-undo" invisible="state != 'issued'"/>
+                <button name="action_lost" type="object" string="Lost" icon="fa-times-circle" class="text-danger"
+                        invisible="state != 'issued'"
+                        confirm="Mark this item as lost? It will not be expected back at end of service."/>
             </list>
         </field>
     </record>

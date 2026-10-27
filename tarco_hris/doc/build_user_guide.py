@@ -73,7 +73,7 @@ TILE_TITLE = ParagraphStyle('TileTitle', fontName=FSB, fontSize=10, leading=13, 
 TILE_TEXT = ParagraphStyle('TileText', fontName=F, fontSize=8.5, leading=11.5, textColor=MUTED)
 
 CHAPTER_BLURBS = {
-    1: 'What the module does, the HRIS dashboard, where to find it, who can use it, and what is new in 19.0.1.0.24.',
+    1: 'What the module does, the HRIS dashboard, where to find it, who can use it, and what is new in 19.0.1.0.27.',
     2: 'One-time configuration before HR starts daily work.',
     3: 'Codes, org chart, work requirements, custody, salary and documents in one screen.',
     4: 'Probation and renewals from the Payroll dates, alerts, resignation with custody return, and rehire.',
@@ -314,7 +314,7 @@ def chain_diagram(steps_labels):
 
 def cover_tiles():
     items = [
-        ('Employee file', 'Codes, org chart, custody, salary and documents.'),
+        ('Employee file', 'Codes, org chart, configurable custody, salary and documents.'),
         ('Contracts', '89-day probation, renewals, rehire on the same code.'),
         ('Attendance', 'ZKTeco fingerprint via BioTime, shifts, lateness after 08:15.'),
         ('Leave', '21 or 30 day schemes, sick leave, holidays, encashment.'),
@@ -530,7 +530,7 @@ def build_story():
                % (menu('Employees'), menu('Tarco HRIS'))))
     s.append(table(['Menu', 'What it contains'], [
         ['Dashboard', 'Tiles of HRIS figures, plus a Charts view (donut, histogram, bar and line). HR sees the company. An employee sees only their own records.'],
-        ['Employee file', 'Employees (list and hierarchy), organization chart, departments, onboarding, work requirements and employee custody.'],
+        ['Employee file', 'Employees (list and hierarchy), organization chart, departments, onboarding, work requirements, employee custody and Give custody.'],
         ['Contracts', 'All contracts; probation ending and renewals due use the Payroll trial end and contract end dates.'],
         ['Attendance', 'Shifts and the daily attendance summary built from fingerprint punches.'],
         ['Leave', 'Leave requests, official holidays, leave encashment (sold leave).'],
@@ -541,7 +541,7 @@ def build_story():
         ['Recruitment', 'Job positions with screening questions, and applicants.'],
         ['KPIs', 'Question templates and employee performance reviews.'],
         ['Reports', 'Period reports (PDF and Excel), employee file report, payroll rule setup.'],
-        ['Configuration', 'Demo data: load or remove sample records in every section.'],
+        ['Configuration', 'Demo data, and Custody types (add or rename any item the company issues).'],
     ], [4.2, 12.2]))
     s.append(section('1.2 Who can do what'))
     s.append(table(['Role', 'Access'], [
@@ -594,7 +594,7 @@ def build_story():
     s.append(p('Scroll the Charts page to see every graph. Daily attendance also has Graph and Pivot views: open %s '
                'and switch the view icons.' % menu('Tarco HRIS > Attendance > Daily attendance')))
     s.append(p('Two extra tiles were added for the latest HRIS screens: <b>Work to do</b> (open work requirements) '
-               'and <b>Custody out</b> (issued laptops, phones, uniforms and badges). HR sees the company; an employee '
+               'and <b>Custody out</b> (issued items of any type from Configuration &gt; Custody types). HR sees the company; an employee '
                'sees only their own lines.'))
     s.append(tip('An employee must be linked on the user form (%s). The dashboard uses that link to hide other records.'
                  % menu('Settings > Users & Companies > Users')))
@@ -687,7 +687,7 @@ def build_story():
         ['Leave encashment', 'Days and amount confirmed this month (extra on this payslip), the list of encashment '
                              'records, and the linked salary adjustment.'],
         ['Work requirements', 'Checklist after the employee is accepted: training, safety, laptop, mobile, uniform, badge, warehouse, accounts.'],
-        ['Employee custody', 'Items issued by the company (laptop, mobile, uniform, badge). Outstanding items must be returned at end of service.'],
+        ['Employee custody', 'Items issued by the company, of any type from Configuration &gt; Custody types. Outstanding items are returned automatically at end of service.'],
         ['Hiring and audit documents', 'One line per document with a file attachment.'],
     ], [3.8, 12.6]))
     s.append(section('3.2 Create a new employee'))
@@ -740,7 +740,7 @@ def build_story():
                                    'the same month is refused (see 4.4).'],
         ['Onboarding notice', 'Opens a notice to the departments that prepare for the new employee.'],
         ['Print file', 'Opens the employee file report with check boxes to choose the sections.'],
-        ['Give custody', 'Opens a short form: tick laptop, phone, uniform and/or badge, type the serial if you have it, click Give to employee.'],
+        ['Give custody', 'Opens a form listing every active custody type. Tick what you hand over, fill item / serial / quantity, click Give to employee. Add types in Configuration &gt; Custody types.'],
         ['Register resignation / Register dismissal / Rehire / Renew contract', 'See chapter 4. Exit returns all issued custody automatically.'],
         ['Smart buttons', 'Documents, Missions, Penalties, Rewards, Advances, Encashment, KPIs, Work to do and Custody out open the related records.'],
         ['Actions > Generate employee code', 'Creates the code from the joining month (see 3.3). Also available '
@@ -814,6 +814,20 @@ def build_story():
     ], [3.4, 13.0]))
     s.append(note('Name, code and <b>Tick by default</b> are set per type in %s. Archive a type to hide it from Give custody without deleting history.'
                   % menu('Configuration > Custody types')))
+    s.append(table(['Custody type field', 'Use'], [
+        ['Name', 'Shown on Give custody and on issued lines. Translate it if you work in Arabic.'],
+        ['Code', 'Short unique key (laptop, headset). Spaces become underscores; stored in lowercase.'],
+        ['Tick by default', 'That row is already ticked when HR opens Give custody.'],
+        ['Sequence', 'Order of the rows in Give custody.'],
+        ['Active', 'Untick to archive. Old issued records keep the type; Give custody no longer lists it.'],
+    ], [4.2, 12.2]))
+    s.append(table(['Give custody column', 'Use'], [
+        ['Give', 'Tick the types you are handing over now.'],
+        ['Type', 'Any active custody type. Add a line, or create a type from this column.'],
+        ['Item / model', 'Free text, for example Dell Latitude.'],
+        ['Serial / tag', 'Asset tag, IMEI or badge number.'],
+        ['Quantity', 'Pieces (uniform, keys). At least 1.'],
+    ], [4.2, 12.2]))
     s.append(PageBreak())
 
     # 4 Contracts
@@ -848,7 +862,7 @@ def build_story():
         ['Renew the contract', 'Click <b>Renew contract</b> on the employee.', 'Renewal date moves forward one year.'],
         ['Resignation', 'Click <b>Register resignation</b>. Choose the last working day. The wizard lists issued '
                         'custody for information only. Click <b>Confirm and return custody</b>.',
-         'Resignation date is set. Every issued laptop, phone, uniform and badge is returned automatically.'],
+         'Resignation date is set. Every issued custody item (any type) is returned automatically.'],
         ['Dismissal / Fired', 'Click <b>Register dismissal</b>. Same one-step confirm.',
          'Last working day is set as a dismissal. All issued custody is returned automatically.'],
         ['Rehire', 'Unarchive the employee if needed, then click <b>Rehire</b>.',
@@ -1298,7 +1312,8 @@ def build_story():
     s.append(section('13.2 Employee file report'))
     s.append(p('Click <b>Print file</b> on an employee, or open %s. Tick the sections to include (personal data, job, '
                'salary, documents, custody and work requirements, contract, leave including this month\'s encashment, attendance, penalties, rewards, '
-               'advances, KPIs) and click <b>Print</b>.' % menu('Reports > Employee file report')))
+               'advances, KPIs) and click <b>Print</b>. The custody section prints number, type name (from Configuration &gt; Custody types), item, serial and status.'
+               % menu('Reports > Employee file report')))
     s.append(section('13.3 Arabic font on printed PDFs'))
     s.append(p('All Tarco HRIS PDF reports — period reports, the employee file and the mission order — are printed '
                'with <b>IBM Plex Sans Arabic</b>, so Arabic names, legal texts and headings stay clear next to the '
@@ -1351,7 +1366,7 @@ def build_story():
         ['Daily', 'HR and employees', 'Open the HRIS dashboard tiles, then Dashboard charts, and work every tile that is not zero.'],
         ['Daily', 'HR', 'Check activities for probation and renewal alerts. Fix missing checkouts in Attendance.'],
         ['Daily', 'Managers', 'Request leave and missions for the team.'],
-        ['Daily', 'HR', 'Approve leave and missions. Give custody with one click. Check Custody out. Resignation or dismissal returns every item.'],
+        ['Daily', 'HR', 'Approve leave and missions. Give custody from the configured types. Check Custody out. Resignation or dismissal returns every item.'],
         ['Month end', 'HR', 'Generate lateness and absence penalties, check each Reason against Daily attendance, '
                             'then click Confirm selected.'],
         ['Month end', 'HR', 'Create and confirm the overtime batch.'],

@@ -203,7 +203,11 @@ class TarcoHrAsset(models.Model):
 
     def action_lost(self):
         today = fields.Date.context_today(self)
-        self.write({'state': 'lost', 'return_date': today})
+        issued = self.filtered(lambda asset: asset.state == 'issued')
+        if not issued and self:
+            raise UserError(_('%s is not issued, so it cannot be marked lost.') % self[0].display_name)
+        issued.write({'state': 'lost', 'return_date': today})
+        return True
 
     def action_cancel(self):
         if self.filtered(lambda asset: asset.state == 'issued'):
