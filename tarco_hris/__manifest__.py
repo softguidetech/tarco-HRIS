@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Tarco HRIS',
-    'version': '19.0.1.0.24',
+    'version': '19.0.1.0.26',
     'category': 'Human Resources',
     'summary': 'Tarco Aviation HRIS: employee file, contracts, attendance, leave, missions, overtime, penalties, loans, recruitment and KPIs',
     'description': """
@@ -43,6 +43,9 @@ recruitment screening and administrative KPIs.
             'tarco_hris/static/src/scss/dashboard.scss',
             'tarco_hris/static/src/xml/dashboard_charts.xml',
             'tarco_hris/static/src/js/dashboard_charts.js',
+        ],
+        'web.assets_backend_lazy': [
+            'tarco_hris/static/src/js/org_chart_hierarchy.js',
         ],
         'web.report_assets_common': [
             'tarco_hris/static/src/scss/report_fonts.scss',

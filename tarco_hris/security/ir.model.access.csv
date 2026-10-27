@@ -51,3 +51,4 @@ access_tarco_hr_asset_hr,tarco.hr.asset hr,model_tarco_hr_asset,hr.group_hr_user
 access_tarco_hr_asset_user,tarco.hr.asset user,model_tarco_hr_asset,base.group_user,1,0,0,0
 access_tarco_hr_exit_wizard,tarco.hr.exit.wizard,model_tarco_hr_exit_wizard,hr.group_hr_user,1,1,1,1
 access_tarco_hr_exit_line,tarco.hr.exit.line,model_tarco_hr_exit_line,hr.group_hr_user,1,1,1,1
+access_tarco_hr_issue_wizard,tarco.hr.issue.wizard,model_tarco_hr_issue_wizard,hr.group_hr_user,1,1,1,1

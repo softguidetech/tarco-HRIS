@@ -102,7 +102,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_issue" type="object" string="Issue to employee" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_issue" type="object" string="Give to employee" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_return" type="object" string="Return" class="btn-primary" invisible="state != 'issued'"/>
                     <button name="action_lost" type="object" string="Lost / not returned" invisible="state != 'issued'"
                             confirm="Mark this item as lost? It will not be expected back at end of service."/>
@@ -148,16 +148,17 @@
         <field name="name">tarco.hr.asset.list</field>
         <field name="model">tarco.hr.asset</field>
         <field name="arch" type="xml">
-            <list decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'" decoration-muted="state in ('draft', 'cancel')">
-                <field name="name"/>
+            <list editable="bottom" decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'" decoration-muted="state in ('draft', 'cancel')">
+                <field name="name" optional="hide"/>
                 <field name="employee_code" optional="show"/>
                 <field name="employee_id"/>
                 <field name="type_id"/>
                 <field name="description"/>
                 <field name="serial"/>
                 <field name="issue_date"/>
-                <field name="return_date"/>
-                <field name="state"/>
+                <field name="return_date" optional="show"/>
+                <field name="state" optional="show"/>
+                <button name="action_return" type="object" string="Return" icon="fa-undo" invisible="state != 'issued'"/>
             </list>
         </field>
     </record>
@@ -190,7 +191,7 @@
         <field name="name">Employee custody</field>
         <field name="res_model">tarco.hr.asset</field>
         <field name="view_mode">list,form</field>
-        <field name="context">{'search_default_issued': 1}</field>
+        <field name="context">{'search_default_issued': 1, 'default_state': 'issued'}</field>
     </record>
     <record id="action_tarco_assets_outstanding" model="ir.actions.act_window">
         <field name="name">Outstanding custody</field>
@@ -200,45 +201,83 @@
         <field name="context">{'search_default_issued': 1}</field>
     </record>
 
+    <record id="view_tarco_issue_wizard" model="ir.ui.view">
+        <field name="name">tarco.hr.issue.wizard.form</field>
+        <field name="model">tarco.hr.issue.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Give custody">
+                <group>
+                    <field name="employee_id"/>
+                    <field name="employee_code"/>
+                </group>
+                <group string="Tick what you are handing over">
+                    <group>
+                        <field name="give_computer"/>
+                        <field name="computer_item" invisible="not give_computer"/>
+                        <field name="computer_serial" invisible="not give_computer"/>
+                    </group>
+                    <group>
+                        <field name="give_mobile"/>
+                        <field name="mobile_item" invisible="not give_mobile"/>
+                        <field name="mobile_serial" invisible="not give_mobile"/>
+                    </group>
+                    <group>
+                        <field name="give_uniform"/>
+                        <field name="uniform_qty" invisible="not give_uniform"/>
+                    </group>
+                    <group>
+                        <field name="give_badge"/>
+                        <field name="badge_serial" invisible="not give_badge"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="note" placeholder="Optional note"/>
+                </group>
+                <footer>
+                    <button name="action_give" type="object" string="Give to employee" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_tarco_issue_wizard" model="ir.actions.act_window">
+        <field name="name">Give custody</field>
+        <field name="res_model">tarco.hr.issue.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
     <record id="view_tarco_exit_wizard" model="ir.ui.view">
         <field name="name">tarco.hr.exit.wizard.form</field>
         <field name="model">tarco.hr.exit.wizard</field>
         <field name="arch" type="xml">
             <form string="End of service">
-                <sheet>
-                    <div class="oe_title">
-                        <h1>End of service</h1>
-                    </div>
-                    <group>
-                        <field name="employee_id" readonly="1"/>
-                        <field name="employee_code"/>
-                        <field name="resignation_date"/>
-                        <field name="outstanding_count"/>
-                    </group>
-                    <p class="text-muted" invisible="outstanding_count">
-                        No issued custody. Confirm to record the resignation date.
-                    </p>
-                    <p invisible="not outstanding_count">
-                        Return or mark as lost every item issued to this employee before the resignation is recorded.
-                    </p>
-                    <field name="line_ids" nolabel="1">
-                        <list editable="bottom" create="false" delete="false">
-                            <field name="asset_id" readonly="1"/>
-                            <field name="type_id"/>
-                            <field name="description"/>
-                            <field name="serial"/>
-                            <field name="action"/>
-                            <field name="return_date"/>
-                            <field name="condition"/>
-                            <field name="note"/>
-                        </list>
-                    </field>
-                    <group>
-                        <field name="note" placeholder="End of service notes"/>
-                    </group>
-                </sheet>
+                <group>
+                    <field name="employee_id" readonly="1"/>
+                    <field name="employee_code"/>
+                    <field name="exit_kind"/>
+                    <field name="resignation_date"/>
+                    <field name="outstanding_count"/>
+                </group>
+                <p class="text-muted" invisible="outstanding_count">
+                    No issued custody. Confirm to record the last working day.
+                </p>
+                <p invisible="not outstanding_count">
+                    These items will be returned automatically when you confirm.
+                </p>
+                <field name="line_ids" nolabel="1" invisible="not outstanding_count">
+                    <list create="false" delete="false">
+                        <field name="asset_id" readonly="1"/>
+                        <field name="type_id"/>
+                        <field name="description"/>
+                        <field name="serial"/>
+                    </list>
+                </field>
+                <group>
+                    <field name="note" placeholder="Optional note"/>
+                </group>
                 <footer>
-                    <button name="action_confirm" type="object" string="Confirm resignation" class="btn-primary"/>
+                    <button name="action_confirm" type="object" string="Confirm and return custody" class="btn-primary"/>
                     <button string="Cancel" special="cancel"/>
                 </footer>
             </form>

@@ -113,7 +113,7 @@ class TarcoHrAsset(models.Model):
         ('returned', 'Returned'),
         ('lost', 'Lost'),
         ('cancel', 'Cancelled'),
-    ], default='draft', required=True, tracking=True)
+    ], default='issued', required=True, tracking=True)
 
     @api.depends('name', 'description', 'type_id', 'serial')
     def _compute_display_name(self):
@@ -140,9 +140,13 @@ class TarcoHrAsset(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        today = fields.Date.context_today(self)
         for vals in vals_list:
             if vals.get('name', '/') == '/':
                 vals['name'] = self.env['ir.sequence'].next_by_code('tarco.hr.asset') or '/'
+            vals.setdefault('state', 'issued')
+            if vals.get('state') == 'issued' and not vals.get('issue_date'):
+                vals['issue_date'] = today
         return super().create(vals_list)
 
     def action_issue(self):
@@ -157,11 +161,27 @@ class TarcoHrAsset(models.Model):
 
     def action_return(self):
         today = fields.Date.context_today(self)
-        for asset in self:
-            if asset.state != 'issued':
-                raise UserError(_('%s is not issued, so it cannot be returned.') % asset.display_name)
-            asset.write({'state': 'returned', 'return_date': asset.return_date or today})
+        issued = self.filtered(lambda asset: asset.state == 'issued')
+        if not issued and self:
+            raise UserError(_('%s is not issued, so it cannot be returned.') % self[0].display_name)
+        issued.write({'state': 'returned', 'return_date': today})
         return True
+
+    def action_release_on_exit(self, exit_date=None, reason=''):
+        """Return every issued item in one step (resign or dismissal)."""
+        today = exit_date or fields.Date.context_today(self)
+        issued = self.filtered(lambda asset: asset.state == 'issued')
+        note = _('Released automatically at end of service%s.') % (
+            (' — %s' % reason) if reason else ''
+        )
+        for asset in issued:
+            extra = ('\n' + note) if note not in (asset.note or '') else ''
+            asset.write({
+                'state': 'returned',
+                'return_date': today,
+                'note': ((asset.note or '') + extra).strip(),
+            })
+        return issued
 
     def action_lost(self):
         today = fields.Date.context_today(self)
@@ -182,13 +202,73 @@ class TarcoHrAsset(models.Model):
                 raise ValidationError(_('Quantity must be at least 1.'))
 
 
+class TarcoHrIssueWizard(models.TransientModel):
+    _name = 'tarco.hr.issue.wizard'
+    _description = 'Give Custody to Employee'
+
+    employee_id = fields.Many2one('hr.employee', required=True)
+    employee_code = fields.Char(related='employee_id.employee_code')
+    give_computer = fields.Boolean(string='Laptop / Computer', default=True)
+    computer_item = fields.Char(string='Laptop model', default='Laptop')
+    computer_serial = fields.Char(string='Laptop serial')
+    give_mobile = fields.Boolean(string='Mobile phone')
+    mobile_item = fields.Char(string='Phone model', default='Mobile phone')
+    mobile_serial = fields.Char(string='Phone serial / number')
+    give_uniform = fields.Boolean(string='Uniform')
+    uniform_qty = fields.Integer(string='Uniform pieces', default=1)
+    give_badge = fields.Boolean(string='Badge / ID card')
+    badge_serial = fields.Char(string='Badge number')
+    note = fields.Char()
+
+    def action_give(self):
+        self.ensure_one()
+        if not any((self.give_computer, self.give_mobile, self.give_uniform, self.give_badge)):
+            raise UserError(_('Tick at least one item to give to the employee.'))
+        Asset = self.env['tarco.hr.asset']
+        created = Asset.browse()
+        specs = [
+            (self.give_computer, 'computer', self.computer_item or _('Laptop'), self.computer_serial, 1),
+            (self.give_mobile, 'mobile', self.mobile_item or _('Mobile phone'), self.mobile_serial, 1),
+            (self.give_uniform, 'uniform', _('Uniform'), False, self.uniform_qty or 1),
+            (self.give_badge, 'badge', _('Badge / ID card'), self.badge_serial, 1),
+        ]
+        for give, kind, item, serial, qty in specs:
+            if not give:
+                continue
+            created |= Asset.create({
+                'employee_id': self.employee_id.id,
+                'type_id': Asset._type_for_kind(kind).id,
+                'description': item,
+                'serial': serial or False,
+                'quantity': max(qty, 1),
+                'note': self.note or '',
+                'state': 'issued',
+            })
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'success',
+                'message': _('Given to %s: %s') % (
+                    self.employee_id.name,
+                    ', '.join(created.mapped('description')),
+                ),
+                'next': {'type': 'ir.actions.act_window_close'},
+            },
+        }
+
+
 class TarcoHrExitWizard(models.TransientModel):
     _name = 'tarco.hr.exit.wizard'
     _description = 'End of Service / Return Custody'
 
     employee_id = fields.Many2one('hr.employee', required=True)
     employee_code = fields.Char(related='employee_id.employee_code')
-    resignation_date = fields.Date(required=True, default=fields.Date.context_today)
+    exit_kind = fields.Selection([
+        ('resign', 'Resignation'),
+        ('fired', 'Dismissal / Fired'),
+    ], required=True, default='resign')
+    resignation_date = fields.Date(string='Last working day', required=True, default=fields.Date.context_today)
     outstanding_count = fields.Integer(compute='_compute_lines')
     line_ids = fields.One2many('tarco.hr.exit.line', 'wizard_id')
     note = fields.Text()
@@ -200,11 +280,7 @@ class TarcoHrExitWizard(models.TransientModel):
         if employee:
             values['employee_id'] = employee.id
             values['line_ids'] = [
-                (0, 0, {
-                    'asset_id': asset.id,
-                    'action': 'return',
-                    'return_date': fields.Date.context_today(self),
-                })
+                (0, 0, {'asset_id': asset.id})
                 for asset in employee.tarco_asset_ids.filtered(lambda rec: rec.state == 'issued')
             ]
         return values
@@ -214,42 +290,43 @@ class TarcoHrExitWizard(models.TransientModel):
         for wizard in self:
             wizard.outstanding_count = len(wizard.line_ids)
 
+    def _departure_reason(self):
+        Reason = self.env['hr.departure.reason']
+        if self.exit_kind == 'fired':
+            return (
+                Reason.search([('name', 'ilike', 'fired')], limit=1)
+                or Reason.search([('name', 'ilike', 'dismiss')], limit=1)
+                or Reason.search([('name', 'ilike', 'terminat')], limit=1)
+            )
+        return Reason.search([('name', 'ilike', 'resign')], limit=1)
+
     def action_confirm(self):
         self.ensure_one()
+        reason_label = dict(self._fields['exit_kind'].selection).get(self.exit_kind)
         issued = self.employee_id.tarco_asset_ids.filtered(lambda rec: rec.state == 'issued')
-        handled = self.line_ids.mapped('asset_id')
-        missing = issued - handled
-        if missing:
-            raise UserError(_(
-                'Return or mark as lost every issued item before end of service: %s'
-            ) % ', '.join(missing.mapped('display_name')))
-        for line in self.line_ids:
-            if line.action == 'lost':
-                line.asset_id.write({
-                    'state': 'lost',
-                    'return_date': line.return_date or self.resignation_date,
-                    'condition_return': line.condition or line.asset_id.condition_return,
-                    'note': (line.asset_id.note or '') + ('\n' + (line.note or '') if line.note else ''),
-                })
-            else:
-                line.asset_id.write({
-                    'state': 'returned',
-                    'return_date': line.return_date or self.resignation_date,
-                    'condition_return': line.condition or line.asset_id.condition_return,
-                    'note': (line.asset_id.note or '') + ('\n' + (line.note or '') if line.note else ''),
-                })
-        self.employee_id.write({
+        released = issued.action_release_on_exit(self.resignation_date, reason_label)
+        self.employee_id.tarco_requirement_ids.filtered(lambda rec: rec.state == 'todo').action_cancel()
+        vals = {
             'tarco_resignation_date': self.resignation_date,
             'departure_date': self.resignation_date,
-        })
+        }
+        reason = self._departure_reason()
+        if reason:
+            vals['departure_reason_id'] = reason.id
+        self.employee_id.with_context(tarco_skip_custody_release=True).write(vals)
+        items = released.mapped('display_name') or [_('none')]
+        body = _('End of service (%s). Custody released: %s.') % (reason_label, ', '.join(items))
         if self.note:
-            self.employee_id.message_post(body=_('End of service: %s') % self.note)
+            body = '%s\n%s' % (body, self.note)
+        self.employee_id.message_post(body=body)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'type': 'success',
-                'message': _('Resignation recorded. %s custody item(s) closed.') % len(self.line_ids),
+                'message': _('%s recorded. %s custody item(s) returned automatically.') % (
+                    reason_label, len(released),
+                ),
                 'next': {'type': 'ir.actions.act_window_close'},
             },
         }
@@ -265,9 +342,9 @@ class TarcoHrExitLine(models.TransientModel):
     description = fields.Char(related='asset_id.description')
     serial = fields.Char(related='asset_id.serial')
     action = fields.Selection([
-        ('return', 'Returned'),
+        ('return', 'Returned automatically'),
         ('lost', 'Lost / not returned'),
-    ], required=True, default='return')
+    ], default='return')
     return_date = fields.Date(default=fields.Date.context_today)
     condition = fields.Char()
     note = fields.Char()

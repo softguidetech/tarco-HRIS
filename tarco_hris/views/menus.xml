@@ -23,6 +23,7 @@
     <menuitem id="menu_tarco_onboarding" name="Onboarding notices" parent="menu_tarco_employees" action="action_tarco_onboarding" sequence="20"/>
     <menuitem id="menu_tarco_requirements" name="Work requirements" parent="menu_tarco_employees" action="action_tarco_requirements" sequence="22"/>
     <menuitem id="menu_tarco_assets" name="Employee custody" parent="menu_tarco_employees" action="action_tarco_assets" sequence="24"/>
+    <menuitem id="menu_tarco_issue_custody" name="Give custody" parent="menu_tarco_employees" action="action_tarco_issue_wizard" sequence="25"/>
 
     <menuitem id="menu_tarco_contracts" name="Contracts" parent="menu_tarco_hris_root" sequence="20" groups="hr.group_hr_user"/>
     <record id="action_tarco_contracts" model="ir.actions.act_window">

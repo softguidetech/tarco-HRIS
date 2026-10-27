@@ -6,7 +6,9 @@
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
+                <button name="action_tarco_give_custody" type="object" string="Give custody" groups="hr.group_hr_user" class="btn-primary" invisible="tarco_resignation_date"/>
                 <button name="action_tarco_resign" type="object" string="Register resignation" groups="hr.group_hr_user" invisible="tarco_resignation_date"/>
+                <button name="action_tarco_fire" type="object" string="Register dismissal" groups="hr.group_hr_user" invisible="tarco_resignation_date"/>
                 <button name="action_tarco_rehire" type="object" string="Rehire" groups="hr.group_hr_user" invisible="not tarco_resignation_date"/>
                 <button name="action_tarco_renew" type="object" string="Renew contract" groups="hr.group_hr_user"/>
             </xpath>
@@ -141,6 +143,8 @@
                         <button name="action_tarco_post_statutory" type="object" string="Post tax and insurance" class="btn-secondary"
                                 invisible="tarco_auto_statutory or (not tarco_subject_to_tax and not tarco_subject_to_insurance)"/>
                         <button name="action_tarco_onboarding" type="object" string="Onboarding notice" class="btn-secondary"/>
+                        <button name="action_tarco_give_custody" type="object" string="Give custody" class="btn-primary"
+                                invisible="tarco_resignation_date"/>
                         <button name="action_tarco_employee_report" type="object" string="Print file" class="btn-primary"/>
                     </div>
                     <group string="Work requirements after hiring">
@@ -159,17 +163,16 @@
                         </field>
                     </group>
                     <group string="Employee custody">
-                        <field name="tarco_asset_ids" nolabel="1" colspan="2">
-                            <list decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'">
-                                <field name="name"/>
+                        <field name="tarco_asset_ids" nolabel="1" colspan="2" context="{'default_state': 'issued'}">
+                            <list editable="bottom" decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'">
+                                <field name="name" optional="hide"/>
                                 <field name="type_id"/>
-                                <field name="description"/>
-                                <field name="serial"/>
+                                <field name="description" placeholder="e.g. Dell laptop"/>
+                                <field name="serial" placeholder="Serial / tag"/>
+                                <field name="quantity" optional="hide"/>
                                 <field name="issue_date"/>
                                 <field name="return_date" optional="show"/>
-                                <field name="state"/>
-                                <button name="action_issue" type="object" string="Issue" icon="fa-check"
-                                        invisible="state != 'draft'"/>
+                                <field name="state" readonly="1"/>
                                 <button name="action_return" type="object" string="Return" icon="fa-undo"
                                         invisible="state != 'issued'"/>
                             </list>
@@ -189,6 +192,28 @@
                         </field>
                     </group>
                 </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_employee_hierarchy_tarco" model="ir.ui.view">
+        <field name="name">hr.employee.hierarchy.tarco.full</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_org_chart.hr_employee_hierarchy_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//hierarchy" position="attributes">
+                <attribute name="js_class">tarco_hr_employee_hierarchy</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_department_hierarchy_tarco" model="ir.ui.view">
+        <field name="name">hr.department.hierarchy.tarco.full</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr_org_chart.hr_department_hierarchy_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//hierarchy" position="attributes">
+                <attribute name="js_class">tarco_full_hierarchy</attribute>
             </xpath>
         </field>
     </record>

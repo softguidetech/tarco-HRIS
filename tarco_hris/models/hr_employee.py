@@ -12,6 +12,7 @@ from .tarco_common import (
     RELIGION_SELECTION,
     tarco_daily_wage,
     tarco_gross,
+    tarco_hierarchy_read,
     tarco_post_adjustment,
 )
 
@@ -438,20 +439,49 @@ class HrEmployee(models.Model):
             if duplicate:
                 raise ValidationError(_('Employee code %s is already used.') % employee.employee_code)
 
-    def action_tarco_resign(self):
+    def action_tarco_give_custody(self):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': _('End of service'),
+            'name': _('Give custody'),
+            'res_model': 'tarco.hr.issue.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_employee_id': self.id},
+        }
+
+    def _tarco_open_exit(self, kind):
+        self.ensure_one()
+        title = _('Register dismissal') if kind == 'fired' else _('Register resignation')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': title,
             'res_model': 'tarco.hr.exit.wizard',
             'view_mode': 'form',
             'target': 'new',
             'context': {
                 'default_employee_id': self.id,
+                'default_exit_kind': kind,
                 'active_id': self.id,
                 'active_model': 'hr.employee',
             },
         }
+
+    def action_tarco_resign(self):
+        return self._tarco_open_exit('resign')
+
+    def action_tarco_fire(self):
+        return self._tarco_open_exit('fired')
+
+    def write(self, vals):
+        res = super().write(vals)
+        if self.env.context.get('tarco_skip_custody_release'):
+            return res
+        exit_date = vals.get('tarco_resignation_date') or vals.get('departure_date')
+        if exit_date:
+            issued = self.mapped('tarco_asset_ids').filtered(lambda rec: rec.state == 'issued')
+            issued.action_release_on_exit(exit_date, _('resignation / dismissal'))
+        return res
 
     def action_tarco_rehire(self):
         today = fields.Date.context_today(self)
@@ -718,3 +748,15 @@ class HrEmployee(models.Model):
     def tarco_daily_wage(self):
         self.ensure_one()
         return tarco_daily_wage(self)
+
+    @api.model
+    def hierarchy_read(self, domain, specification, parent_field, child_field=None, order=None):
+        return tarco_hierarchy_read(self, domain, specification, parent_field, order)
+
+
+class HrDepartment(models.Model):
+    _inherit = 'hr.department'
+
+    @api.model
+    def hierarchy_read(self, domain, specification, parent_field, child_field=None, order=None):
+        return tarco_hierarchy_read(self, domain, specification, parent_field, order)

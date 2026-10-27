@@ -202,3 +202,36 @@ def format_clock(value):
     total = int(round(float(value) * 60))
     hours, minutes = divmod(abs(total), 60)
     return '%02d:%02d' % (hours, minutes)
+
+
+def tarco_hierarchy_read(model, domain, specification, parent_field, order=None):
+    """Return every record in the domain plus ancestors and descendants.
+
+    The standard hierarchy view only loads roots and one opened branch. Tarco
+    HRIS needs the full pyramid on the first screen.
+    """
+    if parent_field not in specification:
+        specification = dict(specification)
+        specification[parent_field] = {'fields': {'display_name': {}}}
+    records = model.search(domain, order=order)
+    if not records:
+        return []
+    seen = set(records.ids)
+    to_visit = records
+    while to_visit:
+        children = model.search([
+            (parent_field, 'in', to_visit.ids),
+            ('id', 'not in', list(seen)),
+        ], order=order)
+        records |= children
+        seen.update(children.ids)
+        to_visit = children
+    ancestors = records.mapped(parent_field)
+    while ancestors:
+        new = ancestors.filtered(lambda rec: rec.id not in seen)
+        if not new:
+            break
+        records |= new
+        seen.update(new.ids)
+        ancestors = new.mapped(parent_field)
+    return records.web_read(specification)
