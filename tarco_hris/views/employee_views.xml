@@ -168,14 +168,14 @@
                     </group>
                     <group string="Employee custody">
                         <field name="tarco_asset_ids" nolabel="1" colspan="2" context="{'default_state': 'issued'}">
-                            <list editable="bottom" decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'">
-                                <field name="name" optional="hide"/>
-                                <field name="type_id"/>
-                                <field name="description" placeholder="e.g. Dell laptop"/>
-                                <field name="serial" placeholder="Serial / tag"/>
-                                <field name="quantity" optional="hide"/>
-                                <field name="issue_date"/>
-                                <field name="return_date" optional="show"/>
+                            <list create="false" delete="false" decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'">
+                                <field name="name" optional="hide" readonly="1"/>
+                                <field name="type_id" readonly="1"/>
+                                <field name="description" readonly="1"/>
+                                <field name="serial" readonly="1"/>
+                                <field name="quantity" optional="hide" readonly="1"/>
+                                <field name="issue_date" readonly="1"/>
+                                <field name="return_date" optional="show" readonly="1"/>
                                 <field name="state" readonly="1"/>
                                 <button name="action_return" type="object" string="Return" icon="fa-undo"
                                         invisible="state != 'issued'"/>

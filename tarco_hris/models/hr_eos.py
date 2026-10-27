@@ -52,12 +52,20 @@ class TarcoHrEos(models.Model):
     service_days = fields.Integer(compute='_compute_service', store=True)
     service_display = fields.Char(string='Length of service', compute='_compute_service', store=True)
     years_float = fields.Float(compute='_compute_service', store=True, digits=(16, 4))
-    first_band_years = fields.Float(string='Years (first 5)', compute='_compute_amounts', digits=(16, 4))
-    extra_years = fields.Float(string='Years after 5', compute='_compute_amounts', digits=(16, 4))
-    first_band_amount = fields.Monetary(string='First 5 years (0.5 month each)', compute='_compute_amounts')
-    extra_amount = fields.Monetary(string='After 5 years (1 month each)', compute='_compute_amounts')
+    first_band_years = fields.Float(
+        string='Years (first 5)', compute='_compute_amounts', store=True, digits=(16, 4),
+    )
+    extra_years = fields.Float(
+        string='Years after 5', compute='_compute_amounts', store=True, digits=(16, 4),
+    )
+    first_band_amount = fields.Monetary(
+        string='First 5 years (0.5 month each)', compute='_compute_amounts', store=True,
+    )
+    extra_amount = fields.Monetary(
+        string='After 5 years (1 month each)', compute='_compute_amounts', store=True,
+    )
     calculated_amount = fields.Monetary(string='Calculated amount', compute='_compute_amounts', store=True)
-    formula_note = fields.Char(compute='_compute_amounts')
+    formula_note = fields.Char(compute='_compute_amounts', store=True)
     fixed_amount = fields.Monetary(string='Fixed amount for finance', tracking=True)
     amount = fields.Monetary(
         string='Amount to pay',

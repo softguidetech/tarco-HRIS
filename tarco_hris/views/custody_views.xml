@@ -167,16 +167,16 @@
         <field name="name">tarco.hr.asset.list</field>
         <field name="model">tarco.hr.asset</field>
         <field name="arch" type="xml">
-            <list editable="bottom" decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'" decoration-muted="state in ('draft', 'cancel')">
-                <field name="name" optional="hide"/>
-                <field name="employee_code" optional="show"/>
-                <field name="employee_id"/>
-                <field name="type_id"/>
-                <field name="description"/>
-                <field name="serial"/>
-                <field name="issue_date"/>
-                <field name="return_date" optional="show"/>
-                <field name="state" optional="show"/>
+            <list create="false" delete="false" decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'" decoration-muted="state in ('draft', 'cancel')">
+                <field name="name" optional="hide" readonly="1"/>
+                <field name="employee_code" optional="show" readonly="1"/>
+                <field name="employee_id" readonly="1"/>
+                <field name="type_id" readonly="1"/>
+                <field name="description" readonly="1"/>
+                <field name="serial" readonly="1"/>
+                <field name="issue_date" readonly="1"/>
+                <field name="return_date" optional="show" readonly="1"/>
+                <field name="state" optional="show" readonly="1"/>
                 <button name="action_return" type="object" string="Return" icon="fa-undo" invisible="state != 'issued'"/>
                 <button name="action_lost" type="object" string="Lost" icon="fa-times-circle" class="text-danger"
                         invisible="state != 'issued'"
