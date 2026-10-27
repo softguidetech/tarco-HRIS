@@ -38,6 +38,8 @@ class TarcoHrDashboard(models.TransientModel):
     encashment_count = fields.Integer(compute='_compute_kpis')
     encashment_amount = fields.Monetary(compute='_compute_kpis')
     kpi_count = fields.Integer(compute='_compute_kpis')
+    requirement_todo_count = fields.Integer(compute='_compute_kpis')
+    custody_outstanding_count = fields.Integer(compute='_compute_kpis')
 
     late_day_ids = fields.Many2many('tarco.hr.attendance.day', compute='_compute_lists')
     leave_ids = fields.Many2many('hr.leave', compute='_compute_lists')
@@ -201,6 +203,12 @@ class TarcoHrDashboard(models.TransientModel):
 
             dash.kpi_count = self.env['tarco.hr.kpi.review'].search_count(
                 emp_domain + [('company_id', '=', company.id)]
+            )
+            dash.requirement_todo_count = self.env['tarco.hr.requirement'].search_count(
+                emp_domain + [('state', '=', 'todo'), ('company_id', '=', company.id)]
+            )
+            dash.custody_outstanding_count = self.env['tarco.hr.asset'].search_count(
+                emp_domain + [('state', '=', 'issued'), ('company_id', '=', company.id)]
             )
 
     @api.depends_context('uid', 'company')
@@ -458,3 +466,15 @@ class TarcoHrDashboard(models.TransientModel):
 
     def action_open_kpi(self):
         return self._open('tarco.hr.kpi.review', _('KPI reviews'), self._domain())
+
+    def action_open_requirements(self):
+        return self._open(
+            'tarco.hr.requirement', _('Work requirements'),
+            self._domain() + [('state', '=', 'todo')],
+        )
+
+    def action_open_custody(self):
+        return self._open(
+            'tarco.hr.asset', _('Outstanding custody'),
+            self._domain() + [('state', '=', 'issued')],
+        )

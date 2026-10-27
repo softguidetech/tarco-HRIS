@@ -121,10 +121,13 @@ class TarcoHrDemoWizard(models.TransientModel):
         if employees:
             self.env['tarco.hr.attendance.day'].sudo().search([('employee_id', 'in', employees.ids)]).unlink()
             self.env['hr.attendance'].sudo().search([('employee_id', 'in', employees.ids)]).unlink()
+            self.env['tarco.hr.asset'].sudo().search([('employee_id', 'in', employees.ids)]).unlink()
+            self.env['tarco.hr.requirement'].sudo().search([('employee_id', 'in', employees.ids)]).unlink()
 
         for model in (
             'tarco.hr.kpi.review', 'tarco.hr.kpi.template', 'tarco.hr.overtime', 'tarco.hr.penalty',
             'tarco.hr.reward', 'tarco.hr.advance', 'tarco.hr.leave.encashment', 'tarco.hr.mission',
+            'tarco.hr.asset', 'tarco.hr.requirement',
             'tarco.hr.onboarding', 'tarco.hr.document', 'tarco.hr.public.holiday',
         ):
             self._demo(model).unlink()
@@ -153,9 +156,10 @@ class TarcoHrDemoWizard(models.TransientModel):
         usd = self.env.ref('base.USD', raise_if_not_found=False)
         today = fields.Date.context_today(self)
 
-        operations = self._department('Operations')
-        finance = self._department('Finance')
-        human_resources = self._department('Human Resources')
+        root = self._department('Tarco Aviation')
+        operations = self._department('Operations', parent=root)
+        finance = self._department('Finance', parent=root)
+        human_resources = self._department('Human Resources', parent=root)
         jobs = {
             'technician': self._job('Technician', operations),
             'accountant': self._job('Accountant', finance),
@@ -241,8 +245,19 @@ class TarcoHrDemoWizard(models.TransientModel):
 
         ahmed, fatima, omar, sara = (by_name[name] for name in (
             'Ahmed Hassan', 'Fatima Ali', 'Omar Ibrahim', 'Sara Mohamed'))
+        khalid = by_name['Khalid Yousif']
+        nour = by_name['Nour Eldeen']
+        omar.parent_id = False
+        fatima.parent_id = omar
         sara.parent_id = fatima
         ahmed.parent_id = omar
+        khalid.parent_id = omar
+        nour.parent_id = fatima
+        for dept, manager in (
+            (root, omar), (operations, omar), (finance, fatima), (human_resources, sara),
+        ):
+            if dept.tarco_is_demo:
+                dept.manager_id = manager
 
         for employee, kinds in (
             (ahmed, [('hiring', 'national_id'), ('hiring', 'photo'), ('audit', 'contract')]),
@@ -262,10 +277,79 @@ class TarcoHrDemoWizard(models.TransientModel):
             'employee_id': sara.id,
             'need_training': True,
             'need_computer': True,
+            'need_mobile': True,
             'need_uniform': True,
+            'need_badge': True,
             'note': 'Desk on the second floor. Badge from security.',
         })
         self._safe(notice.action_send)
+        notice.requirement_ids.write({'tarco_is_demo': True})
+
+        computer = self.env.ref('tarco_hris.asset_type_computer', raise_if_not_found=False)
+        mobile = self.env.ref('tarco_hris.asset_type_mobile', raise_if_not_found=False)
+        uniform = self.env.ref('tarco_hris.asset_type_uniform', raise_if_not_found=False)
+        badge = self.env.ref('tarco_hris.asset_type_badge', raise_if_not_found=False)
+        if computer:
+            ahmed_pc = self._make('tarco.hr.asset', {
+                'employee_id': ahmed.id,
+                'type_id': computer.id,
+                'description': 'Dell Latitude 5540',
+                'serial': 'DL-AH-5540',
+                'condition_issue': 'New',
+                'issue_date': ahmed.tarco_hire_date,
+            })
+            self._safe(ahmed_pc.action_issue)
+            fatima_pc = self._make('tarco.hr.asset', {
+                'employee_id': fatima.id,
+                'type_id': computer.id,
+                'description': 'HP EliteBook 840',
+                'serial': 'HP-FA-840',
+                'condition_issue': 'Good',
+                'issue_date': fatima.tarco_hire_date,
+            })
+            self._safe(fatima_pc.action_issue)
+            khalid_pc = self._make('tarco.hr.asset', {
+                'employee_id': khalid.id,
+                'type_id': computer.id,
+                'description': 'Lenovo ThinkPad',
+                'serial': 'LN-KY-01',
+                'issue_date': khalid.tarco_hire_date,
+            })
+            self._safe(khalid_pc.action_issue)
+            if khalid_pc.state == 'issued':
+                khalid_pc.write({
+                    'state': 'returned',
+                    'return_date': khalid.tarco_resignation_date,
+                    'condition_return': 'Returned at end of service',
+                })
+        if mobile:
+            ahmed_phone = self._make('tarco.hr.asset', {
+                'employee_id': ahmed.id,
+                'type_id': mobile.id,
+                'description': 'Samsung Galaxy A55',
+                'serial': 'SM-AH-A55',
+                'issue_date': ahmed.tarco_hire_date,
+            })
+            self._safe(ahmed_phone.action_issue)
+        if uniform:
+            uniform_req = notice.requirement_ids.filtered(lambda rec: rec.kind == 'uniform')[:1]
+            if uniform_req:
+                self._safe(uniform_req.action_issue_custody)
+                if uniform_req.asset_id:
+                    uniform_req.asset_id.write({
+                        'tarco_is_demo': True,
+                        'description': 'Office uniform set',
+                        'serial': 'UNI-SM-01',
+                    })
+        if badge:
+            nour_badge = self._make('tarco.hr.asset', {
+                'employee_id': nour.id,
+                'type_id': badge.id,
+                'description': 'Staff badge',
+                'serial': 'BDG-NE-01',
+                'issue_date': nour.tarco_rehire_date or nour.tarco_hire_date,
+            })
+            self._safe(nour_badge.action_issue)
 
         year = today.year
         for name, day, month in (
@@ -410,11 +494,16 @@ class TarcoHrDemoWizard(models.TransientModel):
             ('tarco_is_demo', '=', False),
         ]).write({'tarco_is_demo': True})
 
-    def _department(self, name):
+    def _department(self, name, parent=None):
         existing = self.env['hr.department'].sudo().search([('name', '=', name)], limit=1)
         if existing:
+            if parent and existing.tarco_is_demo and existing.parent_id != parent:
+                existing.parent_id = parent
             return existing
-        return self._make('hr.department', {'name': name, 'company_id': self.env.company.id})
+        values = {'name': name, 'company_id': self.env.company.id}
+        if parent:
+            values['parent_id'] = parent.id
+        return self._make('hr.department', values)
 
     def _job(self, name, department):
         existing = self.env['hr.job'].sudo().search([

@@ -11,6 +11,7 @@ class TarcoHrEmployeeReportWizard(models.TransientModel):
     show_job = fields.Boolean(default=True, string='Job')
     show_salary = fields.Boolean(default=True, string='Salary')
     show_documents = fields.Boolean(default=True, string='Documents')
+    show_custody = fields.Boolean(default=True, string='Custody and work requirements')
     show_contract = fields.Boolean(default=True, string='Contract')
     show_leave = fields.Boolean(default=True, string='Leave')
     show_attendance = fields.Boolean(default=False, string='Attendance')

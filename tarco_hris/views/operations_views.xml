@@ -653,10 +653,22 @@
                         <field name="need_training"/>
                         <field name="need_safety"/>
                         <field name="need_computer"/>
+                        <field name="need_mobile"/>
                         <field name="need_library"/>
                         <field name="need_uniform"/>
                         <field name="need_warehouse"/>
+                        <field name="need_badge"/>
                         <field name="note"/>
+                    </group>
+                    <group string="Work requirements" invisible="not requirement_ids">
+                        <field name="requirement_ids" nolabel="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="kind"/>
+                                <field name="state"/>
+                                <field name="asset_id"/>
+                            </list>
+                        </field>
                     </group>
                 </sheet>
                 <chatter/>

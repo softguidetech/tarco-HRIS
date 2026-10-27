@@ -11,6 +11,7 @@
                     <field name="show_job"/>
                     <field name="show_salary"/>
                     <field name="show_documents"/>
+                    <field name="show_custody"/>
                     <field name="show_contract"/>
                     <field name="show_leave"/>
                     <field name="show_attendance"/>

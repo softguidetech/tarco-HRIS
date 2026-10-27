@@ -69,6 +69,16 @@ class TarcoHrOnboarding(models.Model):
     _inherit = ['tarco.hr.onboarding', 'tarco.hr.demo.mixin']
 
 
+class TarcoHrRequirement(models.Model):
+    _name = 'tarco.hr.requirement'
+    _inherit = ['tarco.hr.requirement', 'tarco.hr.demo.mixin']
+
+
+class TarcoHrAsset(models.Model):
+    _name = 'tarco.hr.asset'
+    _inherit = ['tarco.hr.asset', 'tarco.hr.demo.mixin']
+
+
 class TarcoHrPublicHoliday(models.Model):
     _name = 'tarco.hr.public.holiday'
     _inherit = ['tarco.hr.public.holiday', 'tarco.hr.demo.mixin']

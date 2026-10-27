@@ -140,6 +140,15 @@ class HrEmployee(models.Model):
         groups='hr.group_hr_user',
         help='Confirmed leave encashment in the current month. This extra amount is posted to this month\'s payslip.',
     )
+    tarco_requirement_ids = fields.One2many(
+        'tarco.hr.requirement', 'employee_id', string='Work Requirements', groups='hr.group_hr_user',
+    )
+    tarco_asset_ids = fields.One2many(
+        'tarco.hr.asset', 'employee_id', string='Custody', groups='hr.group_hr_user',
+    )
+    tarco_requirement_todo_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_asset_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_asset_outstanding_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
 
     @api.model
     def _get_certificate_selection(self):
@@ -242,6 +251,16 @@ class HrEmployee(models.Model):
             employee.tarco_encashment_count = self.env['tarco.hr.leave.encashment'].search_count([
                 ('employee_id', '=', employee.id),
             ])
+            employee.tarco_requirement_todo_count = self.env['tarco.hr.requirement'].search_count([
+                ('employee_id', '=', employee.id),
+                ('state', '=', 'todo'),
+            ])
+            assets = self.env['tarco.hr.asset'].search([
+                ('employee_id', '=', employee.id),
+                ('state', '!=', 'cancel'),
+            ])
+            employee.tarco_asset_count = len(assets)
+            employee.tarco_asset_outstanding_count = len(assets.filtered(lambda rec: rec.state == 'issued'))
 
     def _compute_tarco_encashment_month(self):
         today = fields.Date.context_today(self)
@@ -420,8 +439,19 @@ class HrEmployee(models.Model):
                 raise ValidationError(_('Employee code %s is already used.') % employee.employee_code)
 
     def action_tarco_resign(self):
-        today = fields.Date.context_today(self)
-        self.write({'tarco_resignation_date': today, 'departure_date': today})
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('End of service'),
+            'res_model': 'tarco.hr.exit.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_employee_id': self.id,
+                'active_id': self.id,
+                'active_model': 'hr.employee',
+            },
+        }
 
     def action_tarco_rehire(self):
         today = fields.Date.context_today(self)
@@ -610,6 +640,12 @@ class HrEmployee(models.Model):
 
     def action_tarco_open_encashment(self):
         return self._tarco_open('tarco.hr.leave.encashment', [('employee_id', 'in', self.ids)])
+
+    def action_tarco_open_requirements(self):
+        return self._tarco_open('tarco.hr.requirement', [('employee_id', 'in', self.ids)])
+
+    def action_tarco_open_assets(self):
+        return self._tarco_open('tarco.hr.asset', [('employee_id', 'in', self.ids)])
 
     def _tarco_open(self, model, domain):
         return {

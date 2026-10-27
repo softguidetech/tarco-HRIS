@@ -56,6 +56,12 @@
                         <button name="action_open_holidays" type="object" class="oe_stat_button" icon="fa-flag" invisible="not is_hr">
                             <field name="holiday_draft_count" widget="statinfo" string="Holidays to publish"/>
                         </button>
+                        <button name="action_open_requirements" type="object" class="oe_stat_button" icon="fa-check-square-o">
+                            <field name="requirement_todo_count" widget="statinfo" string="Work to do"/>
+                        </button>
+                        <button name="action_open_custody" type="object" class="oe_stat_button" icon="fa-laptop">
+                            <field name="custody_outstanding_count" widget="statinfo" string="Custody out"/>
+                        </button>
                     </div>
                     <div class="oe_title">
                         <label for="name"/>
@@ -86,6 +92,8 @@
                             <field name="penalty_draft_count"/>
                             <field name="mission_open_count"/>
                             <field name="leave_pending_count"/>
+                            <field name="requirement_todo_count"/>
+                            <field name="custody_outstanding_count"/>
                         </group>
                     </group>
                     <notebook>

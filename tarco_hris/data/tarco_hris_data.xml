@@ -92,6 +92,37 @@
             <field name="prefix">ENC/%(year)s/</field>
             <field name="padding">4</field>
         </record>
+        <record id="seq_tarco_asset" model="ir.sequence">
+            <field name="name">Tarco Employee Custody</field>
+            <field name="code">tarco.hr.asset</field>
+            <field name="prefix">CUS/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="asset_type_computer" model="tarco.hr.asset.type">
+            <field name="name">Laptop / Computer</field>
+            <field name="code">computer</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="asset_type_mobile" model="tarco.hr.asset.type">
+            <field name="name">Mobile phone</field>
+            <field name="code">mobile</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="asset_type_uniform" model="tarco.hr.asset.type">
+            <field name="name">Uniform</field>
+            <field name="code">uniform</field>
+            <field name="sequence">30</field>
+        </record>
+        <record id="asset_type_badge" model="tarco.hr.asset.type">
+            <field name="name">Badge / ID card</field>
+            <field name="code">badge</field>
+            <field name="sequence">40</field>
+        </record>
+        <record id="asset_type_other" model="tarco.hr.asset.type">
+            <field name="name">Other</field>
+            <field name="code">other</field>
+            <field name="sequence">90</field>
+        </record>
         <record id="seq_tarco_kpi" model="ir.sequence">
             <field name="name">Tarco KPI</field>
             <field name="code">tarco.hr.kpi.review</field>

@@ -32,6 +32,12 @@
                 <button name="action_tarco_open_kpi" type="object" class="oe_stat_button" icon="fa-line-chart" groups="hr.group_hr_user">
                     <field name="tarco_kpi_count" widget="statinfo" string="KPIs"/>
                 </button>
+                <button name="action_tarco_open_requirements" type="object" class="oe_stat_button" icon="fa-check-square-o" groups="hr.group_hr_user">
+                    <field name="tarco_requirement_todo_count" widget="statinfo" string="Work to do"/>
+                </button>
+                <button name="action_tarco_open_assets" type="object" class="oe_stat_button" icon="fa-laptop" groups="hr.group_hr_user">
+                    <field name="tarco_asset_outstanding_count" widget="statinfo" string="Custody out"/>
+                </button>
             </xpath>
             <xpath expr="//page[@name='hr_settings']" position="before">
                 <page name="tarco_hr_file" string="HR File" groups="hr.group_hr_user">
@@ -41,6 +47,7 @@
                             <field name="department_id"/>
                             <field name="section_id"/>
                             <field name="job_id"/>
+                            <field name="parent_id"/>
                             <field name="tarco_hire_date"/>
                             <field name="birthday"/>
                             <field name="country_id"/>
@@ -136,6 +143,38 @@
                         <button name="action_tarco_onboarding" type="object" string="Onboarding notice" class="btn-secondary"/>
                         <button name="action_tarco_employee_report" type="object" string="Print file" class="btn-primary"/>
                     </div>
+                    <group string="Work requirements after hiring">
+                        <field name="tarco_requirement_ids" nolabel="1" colspan="2">
+                            <list decoration-muted="state == 'cancel'" decoration-success="state == 'done'" decoration-warning="state == 'todo'">
+                                <field name="name"/>
+                                <field name="kind"/>
+                                <field name="state"/>
+                                <field name="done_date" optional="show"/>
+                                <field name="asset_id" optional="show"/>
+                                <button name="action_done" type="object" string="Done" icon="fa-check"
+                                        invisible="state != 'todo'"/>
+                                <button name="action_issue_custody" type="object" string="Issue custody" icon="fa-laptop"
+                                        invisible="state != 'todo' or kind not in ('computer', 'mobile', 'uniform', 'badge', 'warehouse', 'other')"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Employee custody">
+                        <field name="tarco_asset_ids" nolabel="1" colspan="2">
+                            <list decoration-info="state == 'issued'" decoration-success="state == 'returned'" decoration-danger="state == 'lost'">
+                                <field name="name"/>
+                                <field name="type_id"/>
+                                <field name="description"/>
+                                <field name="serial"/>
+                                <field name="issue_date"/>
+                                <field name="return_date" optional="show"/>
+                                <field name="state"/>
+                                <button name="action_issue" type="object" string="Issue" icon="fa-check"
+                                        invisible="state != 'draft'"/>
+                                <button name="action_return" type="object" string="Return" icon="fa-undo"
+                                        invisible="state != 'issued'"/>
+                            </list>
+                        </field>
+                    </group>
                     <group string="Hiring and audit documents">
                         <field name="tarco_document_ids" nolabel="1" colspan="2">
                             <list editable="bottom">
@@ -168,6 +207,9 @@
             </xpath>
             <xpath expr="//field[@name='name']" position="before">
                 <field name="employee_code" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="parent_id" optional="show" string="Manager"/>
             </xpath>
         </field>
     </record>

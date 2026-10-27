@@ -43,3 +43,11 @@ access_tarco_hr_advance_line_user,tarco.hr.advance.line user,model_tarco_hr_adva
 access_tarco_hr_leave_encashment_user,tarco.hr.leave.encashment user,model_tarco_hr_leave_encashment,base.group_user,1,0,0,0
 access_tarco_hr_shift_user,tarco.hr.shift user,model_tarco_hr_shift,base.group_user,1,0,0,0
 access_tarco_hr_public_holiday_user,tarco.hr.public.holiday user,model_tarco_hr_public_holiday,base.group_user,1,0,0,0
+access_tarco_hr_asset_type_hr,tarco.hr.asset.type hr,model_tarco_hr_asset_type,hr.group_hr_user,1,1,1,1
+access_tarco_hr_asset_type_user,tarco.hr.asset.type user,model_tarco_hr_asset_type,base.group_user,1,0,0,0
+access_tarco_hr_requirement_hr,tarco.hr.requirement hr,model_tarco_hr_requirement,hr.group_hr_user,1,1,1,1
+access_tarco_hr_requirement_user,tarco.hr.requirement user,model_tarco_hr_requirement,base.group_user,1,0,0,0
+access_tarco_hr_asset_hr,tarco.hr.asset hr,model_tarco_hr_asset,hr.group_hr_user,1,1,1,1
+access_tarco_hr_asset_user,tarco.hr.asset user,model_tarco_hr_asset,base.group_user,1,0,0,0
+access_tarco_hr_exit_wizard,tarco.hr.exit.wizard,model_tarco_hr_exit_wizard,hr.group_hr_user,1,1,1,1
+access_tarco_hr_exit_line,tarco.hr.exit.line,model_tarco_hr_exit_line,hr.group_hr_user,1,1,1,1

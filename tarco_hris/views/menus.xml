@@ -8,15 +8,21 @@
     <record id="action_tarco_employees" model="ir.actions.act_window">
         <field name="name">Employees</field>
         <field name="res_model">hr.employee</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,hierarchy,form</field>
     </record>
     <menuitem id="menu_tarco_employee_files" name="Employees" parent="menu_tarco_employees" action="action_tarco_employees" sequence="10"/>
+    <menuitem id="menu_tarco_org_chart" name="Organization chart" parent="menu_tarco_employees"
+              action="hr_org_chart.action_hr_employee_org_chart" sequence="12"/>
+    <menuitem id="menu_tarco_departments" name="Departments" parent="menu_tarco_employees"
+              action="hr.hr_department_kanban_action" sequence="14"/>
     <record id="action_tarco_onboarding" model="ir.actions.act_window">
         <field name="name">Onboarding notices</field>
         <field name="res_model">tarco.hr.onboarding</field>
         <field name="view_mode">list,form</field>
     </record>
     <menuitem id="menu_tarco_onboarding" name="Onboarding notices" parent="menu_tarco_employees" action="action_tarco_onboarding" sequence="20"/>
+    <menuitem id="menu_tarco_requirements" name="Work requirements" parent="menu_tarco_employees" action="action_tarco_requirements" sequence="22"/>
+    <menuitem id="menu_tarco_assets" name="Employee custody" parent="menu_tarco_employees" action="action_tarco_assets" sequence="24"/>
 
     <menuitem id="menu_tarco_contracts" name="Contracts" parent="menu_tarco_hris_root" sequence="20" groups="hr.group_hr_user"/>
     <record id="action_tarco_contracts" model="ir.actions.act_window">
@@ -186,4 +192,5 @@
         <field name="target">new</field>
     </record>
     <menuitem id="menu_tarco_demo" name="Demo data" parent="menu_tarco_configuration" action="action_tarco_demo" sequence="10"/>
+    <menuitem id="menu_tarco_asset_types" name="Custody types" parent="menu_tarco_configuration" action="action_tarco_asset_types" sequence="20"/>
 </odoo>
