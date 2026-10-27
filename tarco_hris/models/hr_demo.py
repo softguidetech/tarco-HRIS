@@ -79,6 +79,11 @@ class TarcoHrAsset(models.Model):
     _inherit = ['tarco.hr.asset', 'tarco.hr.demo.mixin']
 
 
+class TarcoHrEos(models.Model):
+    _name = 'tarco.hr.eos'
+    _inherit = ['tarco.hr.eos', 'tarco.hr.demo.mixin']
+
+
 class TarcoHrPublicHoliday(models.Model):
     _name = 'tarco.hr.public.holiday'
     _inherit = ['tarco.hr.public.holiday', 'tarco.hr.demo.mixin']

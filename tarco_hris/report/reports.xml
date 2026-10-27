@@ -45,6 +45,17 @@
         <field name="print_report_name">'Tarco HR - %s' % (object.get_report_title())</field>
         <field name="paperformat_id" ref="paperformat_tarco_hris_landscape"/>
     </record>
+    <record id="action_report_eos" model="ir.actions.report">
+        <field name="name">End of Service</field>
+        <field name="model">tarco.hr.eos</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">tarco_hris.report_eos</field>
+        <field name="report_file">tarco_hris.report_eos</field>
+        <field name="print_report_name">'End of Service - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_tarco_hr_eos"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_tarco_hris"/>
+    </record>
     <record id="action_report_mission" model="ir.actions.report">
         <field name="name">Mission Order</field>
         <field name="model">tarco.hr.mission</field>
@@ -179,6 +190,111 @@
                     </tr>
                 </table>
             </div>
+        </t>
+    </template>
+
+    <template id="report_eos_document">
+        <t t-call="web.external_layout">
+            <t t-call="tarco_hris.report_font_style"/>
+            <t t-set="cur" t-value="o.currency_id"/>
+            <div class="page o_tarco_hris_report" dir="auto">
+                <h2>End of Service / <span lang="ar">نهاية الخدمة</span></h2>
+                <p class="o_tarco_meta">
+                    Reference <strong t-out="o.name"/>
+                    — <span t-field="o.state"/>
+                </p>
+                <table class="o_tarco_kv">
+                    <colgroup>
+                        <col style="width:18%"/><col style="width:32%"/>
+                        <col style="width:18%"/><col style="width:32%"/>
+                    </colgroup>
+                    <tr>
+                        <th>Employee / <span lang="ar">الموظف</span></th>
+                        <td>[<t t-out="o.employee_code"/>] <t t-out="o.employee_id.name"/></td>
+                        <th>Department / <span lang="ar">الإدارة</span></th>
+                        <td t-out="o.department_id.name or '—'"/>
+                    </tr>
+                    <tr>
+                        <th>Job / <span lang="ar">الوظيفة</span></th>
+                        <td t-out="o.job_id.name or '—'"/>
+                        <th>Reason / <span lang="ar">السبب</span></th>
+                        <td><span t-field="o.exit_kind"/></td>
+                    </tr>
+                    <tr>
+                        <th>Hire date / <span lang="ar">التعيين</span></th>
+                        <td><span t-field="o.hire_date"/></td>
+                        <th>Last working day / <span lang="ar">آخر يوم عمل</span></th>
+                        <td><span t-field="o.last_working_day"/></td>
+                    </tr>
+                    <tr>
+                        <th>Service / <span lang="ar">مدة الخدمة</span></th>
+                        <td t-out="o.service_display or '—'"/>
+                        <th>Wage used / <span lang="ar">الأجر</span></th>
+                        <td><span t-field="o.wage_base" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                    </tr>
+                    <tr>
+                        <th>Amount mode / <span lang="ar">طريقة المبلغ</span></th>
+                        <td><span t-field="o.amount_mode"/></td>
+                        <th>To pay / <span lang="ar">المبلغ للصرف</span></th>
+                        <td><span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                    </tr>
+                </table>
+                <h5>Calculation / <span lang="ar">الحساب</span></h5>
+                <p t-out="o.formula_note"/>
+                <table class="o_tarco_report_table">
+                    <colgroup>
+                        <col style="width:50%"/><col style="width:25%"/><col style="width:25%"/>
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Band</th>
+                            <th class="num">Years</th>
+                            <th class="num">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>First 5 years × 0.5 month / <span lang="ar">أول خمس سنوات × نصف شهر</span></td>
+                            <td class="num" t-out="'%.2f' % o.first_band_years"/>
+                            <td class="num"><span t-field="o.first_band_amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        </tr>
+                        <tr>
+                            <td>Years after 5 × 1 month / <span lang="ar">ما بعد الخمس × شهر</span></td>
+                            <td class="num" t-out="'%.2f' % o.extra_years"/>
+                            <td class="num"><span t-field="o.extra_amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" style="text-align:right;font-weight:700;">Calculated / <span lang="ar">المحسوب</span></td>
+                            <td class="num"><span t-field="o.calculated_amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        </tr>
+                        <tr t-if="o.amount_mode == 'fixed'">
+                            <td colspan="2" style="text-align:right;font-weight:700;">Fixed amount for finance / <span lang="ar">مبلغ ثابت للمالية</span></td>
+                            <td class="num"><span t-field="o.fixed_amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align:right;font-weight:700;">Pay this amount / <span lang="ar">يصرف هذا المبلغ</span></td>
+                            <td class="num"><span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': cur}"/></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <p t-if="o.note"><strong>Note / <span lang="ar">ملاحظة</span>:</strong> <span t-field="o.note"/></p>
+                <table class="o_tarco_kv" style="margin-top:28px;text-align:center;">
+                    <tr>
+                        <td>Human Resources / <span lang="ar">الموارد البشرية</span><br/><br/>____________________</td>
+                        <td>Finance / <span lang="ar">المالية</span><br/><br/>____________________</td>
+                        <td>Employee / <span lang="ar">الموظف</span><br/><br/>____________________</td>
+                    </tr>
+                </table>
+            </div>
+        </t>
+    </template>
+    <template id="report_eos">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="tarco_hris.report_eos_document"/>
+            </t>
         </t>
     </template>
 

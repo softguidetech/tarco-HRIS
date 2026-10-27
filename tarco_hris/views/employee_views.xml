@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
                 <button name="action_tarco_give_custody" type="object" string="Give custody" groups="hr.group_hr_user" class="btn-primary" invisible="tarco_resignation_date"/>
+                <button name="action_tarco_eos" type="object" string="End of service" groups="hr.group_hr_user" class="btn-primary"/>
                 <button name="action_tarco_resign" type="object" string="Register resignation" groups="hr.group_hr_user" invisible="tarco_resignation_date"/>
                 <button name="action_tarco_fire" type="object" string="Register dismissal" groups="hr.group_hr_user" invisible="tarco_resignation_date"/>
                 <button name="action_tarco_rehire" type="object" string="Rehire" groups="hr.group_hr_user" invisible="not tarco_resignation_date"/>
@@ -39,6 +40,9 @@
                 </button>
                 <button name="action_tarco_open_assets" type="object" class="oe_stat_button" icon="fa-laptop" groups="hr.group_hr_user">
                     <field name="tarco_asset_outstanding_count" widget="statinfo" string="Custody out"/>
+                </button>
+                <button name="action_tarco_open_eos" type="object" class="oe_stat_button" icon="fa-sign-out" groups="hr.group_hr_user">
+                    <field name="tarco_eos_count" widget="statinfo" string="End of service"/>
                 </button>
             </xpath>
             <xpath expr="//page[@name='hr_settings']" position="before">

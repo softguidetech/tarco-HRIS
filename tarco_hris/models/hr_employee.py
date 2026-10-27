@@ -150,6 +150,7 @@ class HrEmployee(models.Model):
     tarco_requirement_todo_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
     tarco_asset_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
     tarco_asset_outstanding_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
+    tarco_eos_count = fields.Integer(compute='_compute_tarco_counts', groups='hr.group_hr_user')
 
     @api.model
     def _get_certificate_selection(self):
@@ -262,6 +263,10 @@ class HrEmployee(models.Model):
             ])
             employee.tarco_asset_count = len(assets)
             employee.tarco_asset_outstanding_count = len(assets.filtered(lambda rec: rec.state == 'issued'))
+            employee.tarco_eos_count = self.env['tarco.hr.eos'].search_count([
+                ('employee_id', '=', employee.id),
+                ('state', '!=', 'cancel'),
+            ])
 
     def _compute_tarco_encashment_month(self):
         today = fields.Date.context_today(self)
@@ -473,6 +478,27 @@ class HrEmployee(models.Model):
     def action_tarco_fire(self):
         return self._tarco_open_exit('fired')
 
+    def action_tarco_eos(self):
+        self.ensure_one()
+        existing = self.env['tarco.hr.eos'].search([
+            ('employee_id', '=', self.id),
+            ('state', 'in', ('draft', 'to_pay')),
+        ], limit=1)
+        action = {
+            'type': 'ir.actions.act_window',
+            'name': _('End of service'),
+            'res_model': 'tarco.hr.eos',
+            'view_mode': 'form',
+            'target': 'current',
+            'context': {
+                'default_employee_id': self.id,
+                'default_exit_kind': 'resign',
+            },
+        }
+        if existing:
+            action['res_id'] = existing.id
+        return action
+
     def write(self, vals):
         res = super().write(vals)
         if self.env.context.get('tarco_skip_custody_release'):
@@ -676,6 +702,9 @@ class HrEmployee(models.Model):
 
     def action_tarco_open_assets(self):
         return self._tarco_open('tarco.hr.asset', [('employee_id', 'in', self.ids)])
+
+    def action_tarco_open_eos(self):
+        return self._tarco_open('tarco.hr.eos', [('employee_id', 'in', self.ids)])
 
     def _tarco_open(self, model, domain):
         return {

@@ -45,6 +45,14 @@ def tarco_hourly_wage(employee):
     return tarco_daily_wage(employee) / 8.0
 
 
+def tarco_eos_gratuity(wage, years_float):
+    """Sudan Labour Act 1997 Art. 53: 0.5 month/year for the first 5 years, 1 month/year after."""
+    years = max(float(years_float or 0.0), 0.0)
+    first = min(years, 5.0)
+    extra = max(years - 5.0, 0.0)
+    return (wage or 0.0) * (first * 0.5 + extra * 1.0)
+
+
 def tarco_post_adjustment(env, employee, earning, amount, description, date_start,
                           duration_type='one', total_amount=None):
     """Create a payroll salary adjustment. Earnings are added, other amounts deducted."""

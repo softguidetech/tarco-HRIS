@@ -54,6 +54,7 @@
         <field name="context">{'search_default_renewal_due': 1}</field>
     </record>
     <menuitem id="menu_tarco_renewal" name="Renewals due" parent="menu_tarco_contracts" action="action_tarco_renewal" sequence="30"/>
+    <menuitem id="menu_tarco_eos" name="End of service" parent="menu_tarco_contracts" action="action_tarco_eos" sequence="40"/>
 
     <menuitem id="menu_tarco_attendance" name="Attendance" parent="menu_tarco_hris_root" sequence="30" groups="hr.group_hr_user"/>
     <record id="action_tarco_shifts" model="ir.actions.act_window">

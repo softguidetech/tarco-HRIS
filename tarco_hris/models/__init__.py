@@ -6,6 +6,7 @@ from . import hr_employee
 from . import hr_document
 from . import hr_onboarding
 from . import hr_custody
+from . import hr_eos
 from . import hr_shift
 from . import hr_attendance_day
 from . import hr_leave

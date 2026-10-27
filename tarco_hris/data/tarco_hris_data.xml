@@ -92,6 +92,12 @@
             <field name="prefix">ENC/%(year)s/</field>
             <field name="padding">4</field>
         </record>
+        <record id="seq_tarco_eos" model="ir.sequence">
+            <field name="name">Tarco End of Service</field>
+            <field name="code">tarco.hr.eos</field>
+            <field name="prefix">EOS/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
         <record id="seq_tarco_asset" model="ir.sequence">
             <field name="name">Tarco Employee Custody</field>
             <field name="code">tarco.hr.asset</field>

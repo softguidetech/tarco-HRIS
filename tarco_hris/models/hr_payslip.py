@@ -56,3 +56,4 @@ class HrPayslip(models.Model):
                     vals['paid_amount'] = attachment.monthly_amount
                 attachment.write(vals)
         self.env['tarco.hr.advance']._cron_sync_paid()
+        self.env['tarco.hr.eos']._sync_paid_from_attachments()

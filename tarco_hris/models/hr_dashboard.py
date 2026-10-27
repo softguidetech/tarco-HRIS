@@ -40,6 +40,7 @@ class TarcoHrDashboard(models.TransientModel):
     kpi_count = fields.Integer(compute='_compute_kpis')
     requirement_todo_count = fields.Integer(compute='_compute_kpis')
     custody_outstanding_count = fields.Integer(compute='_compute_kpis')
+    eos_to_pay_count = fields.Integer(compute='_compute_kpis')
 
     late_day_ids = fields.Many2many('tarco.hr.attendance.day', compute='_compute_lists')
     leave_ids = fields.Many2many('hr.leave', compute='_compute_lists')
@@ -209,6 +210,9 @@ class TarcoHrDashboard(models.TransientModel):
             )
             dash.custody_outstanding_count = self.env['tarco.hr.asset'].search_count(
                 emp_domain + [('state', '=', 'issued'), ('company_id', '=', company.id)]
+            )
+            dash.eos_to_pay_count = self.env['tarco.hr.eos'].search_count(
+                emp_domain + [('state', '=', 'to_pay'), ('company_id', '=', company.id)]
             )
 
     @api.depends_context('uid', 'company')
@@ -477,4 +481,10 @@ class TarcoHrDashboard(models.TransientModel):
         return self._open(
             'tarco.hr.asset', _('Outstanding custody'),
             self._domain() + [('state', '=', 'issued')],
+        )
+
+    def action_open_eos(self):
+        return self._open(
+            'tarco.hr.eos', _('End of service'),
+            self._domain() + [('state', '=', 'to_pay')],
         )

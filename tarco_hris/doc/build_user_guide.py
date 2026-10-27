@@ -23,7 +23,7 @@ COMPANY = 'SOFT GUIDE TECHNOLOGY'
 SITE = 'www.softguidetech.com'
 TITLE = 'Tarco HRIS for Odoo 19'
 SUBTITLE = 'User Guide - Human Resources Module'
-VERSION = 'Module version 19.0.1.0.27'
+VERSION = 'Module version 19.0.1.0.29'
 
 NAVY = colors.HexColor('#0F2C4C')
 NAVY_2 = colors.HexColor('#1A4370')
@@ -73,10 +73,10 @@ TILE_TITLE = ParagraphStyle('TileTitle', fontName=FSB, fontSize=10, leading=13, 
 TILE_TEXT = ParagraphStyle('TileText', fontName=F, fontSize=8.5, leading=11.5, textColor=MUTED)
 
 CHAPTER_BLURBS = {
-    1: 'What the module does, the HRIS dashboard, where to find it, who can use it, and what is new in 19.0.1.0.27.',
+    1: 'What the module does, the HRIS dashboard, where to find it, who can use it, and what is new in 19.0.1.0.29.',
     2: 'One-time configuration before HR starts daily work.',
     3: 'Codes, org chart, work requirements, custody, salary and documents in one screen.',
-    4: 'Probation and renewals from the Payroll dates, alerts, resignation with custody return, and rehire.',
+    4: 'Probation and renewals, end of service form (calculate or fixed amount for finance), resignation and rehire.',
     5: 'ZKTeco devices through BioTime, shifts, lateness and the daily attendance sheet.',
     6: 'Leave types, yearly balance, approvals, holidays and encashment.',
     7: 'Business missions for one or many employees, in any currency, with a printable mission order.',
@@ -531,7 +531,7 @@ def build_story():
     s.append(table(['Menu', 'What it contains'], [
         ['Dashboard', 'Tiles of HRIS figures, plus a Charts view (donut, histogram, bar and line). HR sees the company. An employee sees only their own records.'],
         ['Employee file', 'Employees (list and hierarchy), organization chart, departments, onboarding, work requirements, employee custody and Give custody.'],
-        ['Contracts', 'All contracts; probation ending and renewals due use the Payroll trial end and contract end dates.'],
+        ['Contracts', 'All contracts; probation ending, renewals due, and End of service (calculate or fixed amount for finance).'],
         ['Attendance', 'Shifts and the daily attendance summary built from fingerprint punches.'],
         ['Leave', 'Leave requests, official holidays, leave encashment (sold leave).'],
         ['Missions', 'Business missions with one or many employees, in any currency, and the mission order PDF.'],
@@ -593,14 +593,19 @@ def build_story():
     ], [5.4, 11.0]))
     s.append(p('Scroll the Charts page to see every graph. Daily attendance also has Graph and Pivot views: open %s '
                'and switch the view icons.' % menu('Tarco HRIS > Attendance > Daily attendance')))
-    s.append(p('Two extra tiles were added for the latest HRIS screens: <b>Work to do</b> (open work requirements) '
-               'and <b>Custody out</b> (issued items of any type from Configuration &gt; Custody types). HR sees the company; an employee '
-               'sees only their own lines.'))
+    s.append(p('Extra tiles for the latest HRIS screens: <b>Work to do</b> (open work requirements), '
+               '<b>Custody out</b> (issued items of any configured type) and <b>EOS to pay</b> (end of service sent to finance). '
+               'HR sees the company; an employee sees only their own lines.'))
     s.append(tip('An employee must be linked on the user form (%s). The dashboard uses that link to hide other records.'
                  % menu('Settings > Users & Companies > Users')))
     s.append(section('1.5 What is new in this edition'))
-    s.append(p('This guide matches <b>Tarco HRIS 19.0.1.0.27</b>. Upgrade the module on Odoo.sh, then use the menus below.'))
+    s.append(p('This guide matches <b>Tarco HRIS 19.0.1.0.29</b>. Upgrade the module on Odoo.sh, then use the menus below.'))
     s.append(table(['Version', 'What was added'], [
+        ['19.0.1.0.29',
+         'End of service is a form: calculate the Labour Act 1997 gratuity, or type a fixed amount for finance. '
+         'Send to finance posts a Tarco Earning on the next payslip. Print the settlement. Issued custody is returned.'],
+        ['19.0.1.0.28',
+         'Lost button on the custody list (next to Return). Lost lines are red and are not expected back at exit.'],
         ['19.0.1.0.27',
          'Custody types are configurable. Add, rename or archive types in Configuration > Custody types '
          '(headset, keys, tools, or any item). Give custody lists those types instead of four fixed ticks.'],
@@ -737,12 +742,13 @@ def build_story():
                                'A type that already has an allocation this year is left as it is. Resigned staff are skipped.'],
         ['Post tax and insurance', 'Creates one-time deductions for this month: gross x tax % and gross x social '
                                    'insurance %. Shown only when Adjust taxes automatically is off. Posting twice in '
-                                   'the same month is refused (see 4.4).'],
+                                   'the same month is refused (see 4.5).'],
         ['Onboarding notice', 'Opens a notice to the departments that prepare for the new employee.'],
         ['Print file', 'Opens the employee file report with check boxes to choose the sections.'],
         ['Give custody', 'Opens a form listing every active custody type. Tick what you hand over, fill item / serial / quantity, click Give to employee. Add types in Configuration &gt; Custody types.'],
+        ['End of service', 'Opens the end of service form: calculate the benefit or type a fixed amount, then Send to finance.'],
         ['Register resignation / Register dismissal / Rehire / Renew contract', 'See chapter 4. Exit returns all issued custody automatically.'],
-        ['Smart buttons', 'Documents, Missions, Penalties, Rewards, Advances, Encashment, KPIs, Work to do and Custody out open the related records.'],
+        ['Smart buttons', 'Documents, Missions, Penalties, Rewards, Advances, Encashment, KPIs, Work to do, Custody out and End of service open the related records.'],
         ['Actions > Generate employee code', 'Creates the code from the joining month (see 3.3). Also available '
                                              'for many employees at once from the list.'],
     ], [4.6, 11.8]))
@@ -806,11 +812,12 @@ def build_story():
         'Click <b>Give to employee</b>. The ticked items are issued immediately (today\'s date).',
         'Or add a line on the HR File custody list: type, item, serial — saving the line issues it.',
         'If an item comes back early, click <b>Return</b> on that line. You do not need this at exit.',
+        'If the item will not come back, click <b>Lost</b> next to Return. Confirm; the line turns red and is not expected at end of service.',
     ]))
     s.append(table(['Status', 'Meaning'], [
-        ['Issued', 'With the employee. Shown on Custody out.'],
-        ['Returned', 'Handed back. Set by Return, or automatically on resignation / dismissal.'],
-        ['Lost', 'Not returned. Use only if the item will not come back.'],
+        ['Issued', 'With the employee. Shown on Custody out. Blue line.'],
+        ['Returned', 'Handed back. Set by Return, or automatically on resignation / dismissal / End of service. Green line.'],
+        ['Lost', 'Not returned. Click Lost on the list. Red line. Not expected back at exit.'],
     ], [3.4, 13.0]))
     s.append(note('Name, code and <b>Tick by default</b> are set per type in %s. Archive a type to hide it from Give custody without deleting history.'
                   % menu('Configuration > Custody types')))
@@ -869,7 +876,28 @@ def build_story():
          'Same employee and same code. The rehire date is today, the resignation is cleared, and new probation and '
          'renewal dates are calculated from today. The original hire date is kept.'],
     ], [3.4, 5.4, 7.6]))
-    s.append(section('4.4 Statutory and internal deductions'))
+    s.append(section('4.4 End of service payment'))
+    s.append(p('Use the End of service form when finance must pay a leaving benefit. Open it from the employee '
+               '(<b>End of service</b>) or from %s.' % menu('Tarco HRIS > Contracts > End of service')))
+    s.append(steps([
+        'Choose the employee, last working day and reason (resignation, dismissal, contract end or retirement).',
+        'Leave <b>Amount</b> on Calculate to use Sudan Labour Act 1997: half a month of the last gross wage for each '
+        'of the first five years, then one full month for each year after that. Incomplete years are included.',
+        'Or set Amount to <b>Fixed amount</b> and type what finance should pay (a negotiated figure). The calculated '
+        'amount stays on the form as a reference.',
+        'Tick <b>Dismissed for misconduct</b> only when there is no gratuity. The calculated amount becomes 0.',
+        'Click <b>Send to finance</b>. Issued custody is returned, the last working day is recorded, and a Tarco Earning '
+        'is posted for the payslip. Print the settlement for the employee file and for finance.',
+        'When payroll confirms the payslip the form becomes Paid. If finance pays outside payroll, click <b>Mark paid</b>.',
+    ]))
+    s.append(table(['Status', 'Meaning'], [
+        ['Draft', 'HR is preparing the form. Amount can still be calculated or typed.'],
+        ['Sent to finance', 'Tarco Earning is on the next payslip. Print the settlement for finance.'],
+        ['Paid', 'Payslip confirmed, or HR clicked Mark paid after an outside payment.'],
+        ['Cancelled', 'No payment. The payroll line is closed.'],
+    ], [3.4, 13.0]))
+    s.append(note('Register resignation still exists for a last working day with no payment. Use End of service when an amount must go to finance.'))
+    s.append(section('4.5 Statutory and internal deductions'))
     s.append(p('On the HR File page tick <b>Subject to tax</b> and/or <b>Subject to social insurance</b> and enter the '
                'percentages. Then choose how the monthly deduction is posted with the <b>Adjust taxes '
                'automatically</b> flag, shown under the tax fields.'))
@@ -1314,8 +1342,9 @@ def build_story():
                'salary, documents, custody and work requirements, contract, leave including this month\'s encashment, attendance, penalties, rewards, '
                'advances, KPIs) and click <b>Print</b>. The custody section prints number, type name (from Configuration &gt; Custody types), item, serial and status.'
                % menu('Reports > Employee file report')))
+    s.append(p('On an End of service form click <b>Print</b> for the settlement PDF: employee, length of service, calculated or fixed amount, amount for finance, and signature lines for HR, finance and the employee.'))
     s.append(section('13.3 Arabic font on printed PDFs'))
-    s.append(p('All Tarco HRIS PDF reports — period reports, the employee file and the mission order — are printed '
+    s.append(p('All Tarco HRIS PDF reports — period reports, the employee file, the mission order and the end of service settlement — are printed '
                'with <b>IBM Plex Sans Arabic</b>, so Arabic names, legal texts and headings stay clear next to the '
                'English text. Latin text uses DejaVu so letters are not doubled by wkhtmltopdf.'))
     s.append(section('13.4 Excel export style'))
@@ -1338,7 +1367,7 @@ def build_story():
     s.append(p('Tarco HRIS does not change how payslips are computed. It creates salary adjustments in %s that '
                'payroll picks up on the next payslip.' % menu('Payroll > Employees > Salary Adjustments')))
     s.append(table(['Source', 'Adjustment type', 'Effect on payslip'], [
-        ['Rewards, overtime, leave encashment', 'Tarco Earning', 'Added to gross'],
+        ['Rewards, overtime, leave encashment, end of service', 'Tarco Earning', 'Added to gross'],
         ['Penalties, advances, leave deductions, tax, social insurance', 'Tarco Deduction', 'Deducted from net'],
     ], [6.4, 3.6, 6.4]))
     s.append(p('Each adjustment carries a description such as "Penalty Lateness" or "Overtime OT/2026/0003", so the '
@@ -1366,7 +1395,7 @@ def build_story():
         ['Daily', 'HR and employees', 'Open the HRIS dashboard tiles, then Dashboard charts, and work every tile that is not zero.'],
         ['Daily', 'HR', 'Check activities for probation and renewal alerts. Fix missing checkouts in Attendance.'],
         ['Daily', 'Managers', 'Request leave and missions for the team.'],
-        ['Daily', 'HR', 'Approve leave and missions. Give custody from the configured types. Check Custody out. Resignation or dismissal returns every item.'],
+        ['Daily', 'HR', 'Approve leave and missions. Give custody from the configured types. Check Custody out. Use End of service to send the leaving amount to finance.'],
         ['Month end', 'HR', 'Generate lateness and absence penalties, check each Reason against Daily attendance, '
                             'then click Confirm selected.'],
         ['Month end', 'HR', 'Create and confirm the overtime batch.'],
@@ -1447,6 +1476,8 @@ def build_story():
                                                  'Upgrade to 19.0.1.0.25 and open Employee file > Organization chart. The full tree opens expanded.'],
         ['Cannot register resignation.', 'Upgrade to 19.0.1.0.26. Confirm resignation or dismissal once; issued custody is returned automatically.'],
         ['Give custody still shows four fixed ticks.', 'Upgrade to 19.0.1.0.27. Add or rename types in Configuration > Custody types; Give custody lists every active type.'],
+        ['Need to pay end of service.', 'Upgrade to 19.0.1.0.29. Open End of service on the employee, Calculate or type a Fixed amount, then Send to finance.'],
+        ['No Lost button on custody.', 'Upgrade to 19.0.1.0.28. Click Lost next to Return; the line turns red.'],
         ['Onboarding sent but no custody.', 'Onboarding only prepares the list. Click Give custody on the employee and tick the items you handed over.'],
         ['Excel report has a white header and no style.', 'Upgrade to 19.0.1.0.23 or later and click Export Excel again. '
                                                           'The new file has a navy title, navy headers, zebra rows and a freeze pane.'],
